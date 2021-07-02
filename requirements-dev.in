@@ -1,0 +1,7 @@
+# requirements-dev.in
+black
+eth-brownie
+flake8
+isort
+pip-tools
+pre-commit
