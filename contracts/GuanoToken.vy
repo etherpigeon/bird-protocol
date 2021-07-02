@@ -21,6 +21,9 @@ event Transfer:
 allowance: public(HashMap[address, HashMap[address, uint256]])
 balanceOf: public(HashMap[address, uint256])
 totalSupply: public(uint256)
+name: public(String[32])
+symbol: public(String[32])
+decimals: public(uint256)
 
 future_owner: public(address)
 minter: public(address)
@@ -32,23 +35,9 @@ def __init__():
     self.minter = msg.sender
     self.owner = msg.sender
 
-
-@view
-@external
-def decimals() -> uint256:
-    return 18
-
-
-@view
-@external
-def name() -> String[32]:
-    return "Guano"
-
-
-@view
-@external
-def symbol() -> String[32]:
-    return "GUA"
+    self.name = "Guano"
+    self.symbol = "GUA"
+    self.decimals = 18
 
 
 @external
