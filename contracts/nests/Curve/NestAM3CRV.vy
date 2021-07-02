@@ -4,6 +4,7 @@
 @license MIT
 @author Ether Pigeon
 """
+from vyper.interfaces import ERC20
 
 
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
@@ -11,6 +12,9 @@ AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool L
 AM3POOL_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
 N_COINS: constant(uint256) = 3
 
+
+interface AToken:
+    def UNDERLYING_ASSET_ADDRESS() -> address: view
 
 interface CurvePool:
     def add_liquidity(
@@ -53,6 +57,9 @@ decimals: public(uint256)
 future_owner: public(address)
 owner: public(address)
 
+coins: public(address[N_COINS])
+underlying_coins: public(address[N_COINS])
+
 
 @external
 def __init__():
@@ -61,6 +68,17 @@ def __init__():
     self.name = "Curve am3Pool Nest"
     self.symbol = "EGG-am3CRV"
     self.decimals = 18
+
+    for i in range(N_COINS):
+        coin: address = CurvePool(AM3POOL).coins(i)
+        underlying_coin: address = AToken(coin).UNDERLYING_ASSET_ADDRESS()
+        self.coins[i] = coin
+        self.underlying_coins[i] = underlying_coin
+
+        assert ERC20(coin).approve(AM3POOL, MAX_UINT256)  # dev: bad response
+        assert ERC20(underlying_coin).approve(AM3POOL, MAX_UINT256)  # dev: bad response
+
+    assert ERC20(AM3CRV).approve(AM3POOL_GAUGE, MAX_UINT256)  # dev: bad response
 
 
 @external
