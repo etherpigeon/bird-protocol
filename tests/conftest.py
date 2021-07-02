@@ -14,3 +14,13 @@ def bob(accounts):
 @pytest.fixture(scope="session")
 def charlie(accounts):
     return accounts[2]
+
+
+@pytest.fixture(scope="module")
+def guano(alice, GuanoToken):
+    return GuanoToken.deploy({"from": alice})
+
+
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
