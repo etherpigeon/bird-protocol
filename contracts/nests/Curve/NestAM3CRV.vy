@@ -81,6 +81,22 @@ def __init__():
     assert ERC20(AM3CRV).approve(AM3POOL_GAUGE, MAX_UINT256)  # dev: bad response
 
 
+@internal
+def _mint(_to: address, _value: uint256) -> bool:
+    self.balanceOf[_to] += _value
+    self.totalSupply += _value
+    log Transfer(ZERO_ADDRESS, _to, _value)
+    return True
+
+
+@internal
+def _burn(_from: address, _value: uint256) -> bool:
+    self.balanceOf[_from] -= _value
+    self.totalSupply -= _value
+    log Transfer(_from, ZERO_ADDRESS, _value)
+    return True
+
+
 @external
 def approve(_spender: address, _value: uint256) -> bool:
     self.allowance[msg.sender][_spender] = _value
@@ -105,14 +121,6 @@ def transfer(_to: address, _value: uint256) -> bool:
 def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
     self.allowance[_from][msg.sender] -= _value  # dev: insufficient approval
     return self._transferFrom(_from, _to, _value)
-
-
-@external
-def _mint(_to: address, _value: uint256) -> bool:
-    self.balanceOf[_to] += _value
-    self.totalSupply += _value
-    log Transfer(ZERO_ADDRESS, _to, _value)
-    return True
 
 
 @external
