@@ -118,14 +118,14 @@ def _mint_shares(
 @external
 def deposit_gauge_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
-    assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)
+    assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
     return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
 
 
 @external
 def deposit_lp_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
-    assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)
+    assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)  # dev: bad response
     CurveGauge(AM3CRV_GAUGE).deposit(_value, self, True)
     return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
 
@@ -138,7 +138,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
             coin = self.underlying_coins[i]
         else:
             coin = self.coins[i]
-        assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])
+        assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])  # dev: bad response
 
     value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
