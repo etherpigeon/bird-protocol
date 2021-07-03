@@ -6,6 +6,8 @@
 """
 from vyper.interfaces import ERC20
 
+implements: ERC20
+
 
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
