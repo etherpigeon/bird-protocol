@@ -140,7 +140,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
             coin = self.coins[i]
         assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])  # dev: bad response
 
-    value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)
+    value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)  # dev: bad response
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     CurveGauge(AM3CRV_GAUGE).deposit(value, self, True)
     return self._mint_shares(msg.sender, value, self.totalSupply, prev_balance)
