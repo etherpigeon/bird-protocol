@@ -17,8 +17,6 @@ interface CurvePool:
     def add_liquidity(
         _amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool
     ) -> uint256: nonpayable
-    def calc_token_amount(_amounts: uint256[N_COINS], is_deposit: bool) -> uint256: view
-    def calc_withdraw_one_coin(_token_amount: uint256, i: int128) -> uint256: view
     def coins(arg0: uint256) -> address: view
     def remove_liquidity(
         _amount: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool
