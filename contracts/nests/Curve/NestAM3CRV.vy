@@ -9,12 +9,9 @@ from vyper.interfaces import ERC20
 
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
-AM3POOL_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
+AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
 N_COINS: constant(uint256) = 3
 
-
-interface AToken:
-    def UNDERLYING_ASSET_ADDRESS() -> address: view
 
 interface CurvePool:
     def add_liquidity(
@@ -23,7 +20,6 @@ interface CurvePool:
     def calc_token_amount(_amounts: uint256[N_COINS], is_deposit: bool) -> uint256: view
     def calc_withdraw_one_coin(_token_amount: uint256, i: int128) -> uint256: view
     def coins(arg0: uint256) -> address: view
-    def lp_token() -> address: view
     def remove_liquidity(
         _amount: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool
     ) -> uint256[N_COINS]: nonpayable
@@ -34,6 +30,12 @@ interface CurvePool:
         _token_amount: uint256, i: int128, _min_amount: uint256, _use_underlying: bool
     ) -> uint256: nonpayable
     def underlying_coins(arg0: uint256) -> address: view
+
+interface CurveGauge:
+    def claim_rewards(_addr: address, _receiver: address): nonpayable
+    def deposit(_value: uint256, _addr: address, _claim_rewards: bool): nonpayable
+    def reward_tokens(arg0: uint256) -> address: view
+    def withdraw(_value: uint256, _claim_rewards: bool): nonpayable
 
 
 event Approval:
@@ -71,14 +73,14 @@ def __init__():
 
     for i in range(N_COINS):
         coin: address = CurvePool(AM3POOL).coins(i)
-        underlying_coin: address = AToken(coin).UNDERLYING_ASSET_ADDRESS()
+        underlying_coin: address = CurvePool(AM3POOL).underlying_coins(i)
         self.coins[i] = coin
         self.underlying_coins[i] = underlying_coin
 
         assert ERC20(coin).approve(AM3POOL, MAX_UINT256)  # dev: bad response
         assert ERC20(underlying_coin).approve(AM3POOL, MAX_UINT256)  # dev: bad response
 
-    assert ERC20(AM3CRV).approve(AM3POOL_GAUGE, MAX_UINT256)  # dev: bad response
+    assert ERC20(AM3CRV).approve(AM3CRV_GAUGE, MAX_UINT256)  # dev: bad response
 
 
 @internal
@@ -95,6 +97,53 @@ def _burn(_from: address, _value: uint256) -> bool:
     self.totalSupply -= _value
     log Transfer(_from, ZERO_ADDRESS, _value)
     return True
+
+
+@internal
+def _mint_shares(
+    _depositor: address,
+    _deposit_value: uint256,
+    _total_supply: uint256,
+    _prev_balance: uint256
+) -> uint256:
+    if _total_supply == 0:
+        self._mint(_depositor, _deposit_value)
+        return _deposit_value
+    else:
+        shares: uint256 = (_deposit_value * _total_supply) / _prev_balance
+        self._mint(_depositor, shares)
+        return shares
+
+
+@external
+def deposit_gauge_tokens(_value: uint256) -> uint256:
+    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)
+    return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
+
+
+@external
+def deposit_lp_tokens(_value: uint256) -> uint256:
+    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)
+    CurveGauge(AM3CRV_GAUGE).deposit(_value, self, True)
+    return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
+
+
+@external
+def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool) -> uint256:
+    for i in range(N_COINS):
+        coin: address = ZERO_ADDRESS
+        if _use_underlying:
+            coin = self.underlying_coins[i]
+        else:
+            coin = self.coins[i]
+        assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])
+
+    value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)
+    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    CurveGauge(AM3CRV_GAUGE).deposit(value, self, True)
+    return self._mint_shares(msg.sender, value, self.totalSupply, prev_balance)
 
 
 @external
