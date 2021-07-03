@@ -13,6 +13,7 @@ AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
 AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
 N_COINS: constant(uint256) = 3
+MAX_REWARDS: constant(uint256) = 8
 
 
 interface CurvePool:
@@ -61,6 +62,7 @@ owner: public(address)
 
 coins: public(address[N_COINS])
 underlying_coins: public(address[N_COINS])
+reward_tokens: public(address[MAX_REWARDS])
 
 
 @external
@@ -81,6 +83,12 @@ def __init__():
         assert ERC20(underlying_coin).approve(AM3POOL, MAX_UINT256)  # dev: bad response
 
     assert ERC20(AM3CRV).approve(AM3CRV_GAUGE, MAX_UINT256)  # dev: bad response
+
+    for i in range(MAX_REWARDS):
+        reward_token: address = CurveGauge(AM3CRV_GAUGE).reward_tokens(i)
+        if reward_token == ZERO_ADDRESS:
+            break
+        self.reward_tokens[i] = reward_token
 
 
 @internal
