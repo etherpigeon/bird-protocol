@@ -13,9 +13,11 @@ class PolygonForkToken(MintableForkToken):
     def _mint_for_testing(self, target, amount, tx=None):
         if self._lp_token is not None:
             # gauge
+            prev_allowance = self._lp_token.allowance(target, self)
             self._lp_token._mint_for_testing(target, amount)
             self._lp_token.approve(self, amount, {"from": target})
             self.deposit(amount, target, True, {"from": target})
+            self._lp_token.approve(self, prev_allowance, {"from": target})
         elif hasattr(self, "deposit"):
             # child ERC20
             depositor_role = "0x8f4f2da22e8ac8f11e15f9fc141cddbb5deea8800186560abb6e68c5496619a9"
