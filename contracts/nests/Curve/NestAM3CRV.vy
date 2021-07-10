@@ -123,6 +123,20 @@ def _mint_shares(
         return shares
 
 
+@internal
+def _burn_shares(
+    _withdrawer: address,
+    _withdraw_value: uint256,
+    _total_supply: uint256,
+) -> uint256:
+    self._burn(_withdrawer, _withdraw_value)
+    current_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    if _total_supply == _withdraw_value:
+        return current_balance
+    else:
+        return (current_balance * _withdraw_value) / _total_supply
+
+
 @external
 def deposit_gauge_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
@@ -152,6 +166,40 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
     return self._mint_shares(msg.sender, value, self.totalSupply, prev_balance)
+
+
+@external
+def withdraw_gauge_tokens(_value: uint256) -> uint256:
+    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    assert ERC20(AM3CRV_GAUGE).transfer(msg.sender, amount)
+    return amount
+
+
+@external
+def withdraw_lp_tokens(_value: uint256) -> uint256:
+    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
+    lp_balance: uint256 = ERC20(AM3CRV).balanceOf(self)
+    assert ERC20(AM3CRV).transfer(msg.sender, lp_balance)
+    return lp_balance
+
+
+@external
+def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool) -> uint256[N_COINS]:
+    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
+    CurvePool(AM3POOL).remove_liquidity(amount, _min_amounts, _use_underlying)
+    coin_amounts: uint256[N_COINS] = empty(uint256[N_COINS])
+    for i in range(N_COINS):
+        coin: address = ZERO_ADDRESS
+        if _use_underlying:
+            coin = self.underlying_coins[i]
+        else:
+            coin = self.coins[i]
+        coin_balance: uint256 = ERC20(coin).balanceOf(self)
+        coin_amounts[i] = coin_balance
+        assert ERC20(coin).transfer(msg.sender, coin_balance)
+    return coin_amounts
 
 
 @external
