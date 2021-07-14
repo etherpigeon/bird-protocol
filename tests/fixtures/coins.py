@@ -77,6 +77,21 @@ def coins(adai, ausdc, ausdt):
     return [adai, ausdc, ausdt]
 
 
+@pytest.fixture(scope="module", params=(False, True))
+def use_underlying(request):
+    return request.param
+
+
+@pytest.fixture(scope="module")
+def coins_param(coins, underlying_coins, use_underlying):
+    return underlying_coins if use_underlying else coins
+
+
+@pytest.fixture(scope="module")
+def decimals(coins_param):
+    return [coin.decimals() for coin in coins_param]
+
+
 @pytest.fixture(scope="session")
 def am3pool(interface):
     return interface.StableSwap("0x445FE580eF8d70FF569aB36e80c647af338db351")
