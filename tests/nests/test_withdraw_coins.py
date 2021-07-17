@@ -22,7 +22,8 @@ def setup(alice, amounts, coins_param, am3crv_nest, am3pool, use_underlying):
         coin._mint_for_testing(alice, amount - coin.balanceOf(alice))
         coin.approve(am3crv_nest, amount, {"from": alice})
     min_amount = am3pool.calc_token_amount(amounts, True) * 0.99  # 1% slippage
-    am3crv_nest.deposit_coins(amounts, min_amount, use_underlying, {"from": alice})
+    min_shares = am3crv_nest.calc_shares(min_amount, True)
+    am3crv_nest.deposit_coins(amounts, min_amount, use_underlying, min_shares, {"from": alice})
 
 
 def test_withdraw_shares(alice, coins_param, decimals, pool_ratio, am3crv_nest, use_underlying):

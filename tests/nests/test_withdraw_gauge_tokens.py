@@ -6,7 +6,7 @@ import pytest
 def setup(alice, am3crv_gauge, am3crv_nest):
     am3crv_gauge._mint_for_testing(alice, 100 * 10 ** 18)
     am3crv_gauge.approve(am3crv_nest, 100 * 10 ** 18, {"from": alice})
-    am3crv_nest.deposit_gauge_tokens(100 * 10 ** 18, {"from": alice})
+    am3crv_nest.deposit_gauge_tokens(100 * 10 ** 18, 100 * 10 ** 18, {"from": alice})
 
 
 def test_burn_shares(alice, am3crv_gauge, am3crv_nest):
@@ -32,7 +32,7 @@ def test_multiple_depositors_withdraw(alice, bob, am3crv_gauge, am3crv_nest):
     # bob deposits
     am3crv_gauge._mint_for_testing(bob, 100 * 10 ** 18)
     am3crv_gauge.approve(am3crv_nest, 100 * 10 ** 18, {"from": bob})
-    am3crv_nest.deposit_gauge_tokens(100 * 10 ** 18, {"from": bob})  # 50 * 10 ** 18
+    am3crv_nest.deposit_gauge_tokens(100 * 10 ** 18, 50 * 10 ** 18, {"from": bob})  # 50 * 10 ** 18
 
     # alice and bob withdraw
     am3crv_nest.withdraw_gauge_tokens(100 * 10 ** 18, {"from": alice})
