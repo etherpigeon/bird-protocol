@@ -208,14 +208,16 @@ def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underly
     self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     CurvePool(AM3POOL).remove_liquidity(amount, _min_amounts, _use_underlying)
+
+    coin: address = ZERO_ADDRESS
+    coin_balance: uint256 = 0
     coin_amounts: uint256[N_COINS] = empty(uint256[N_COINS])
     for i in range(N_COINS):
-        coin: address = ZERO_ADDRESS
         if _use_underlying:
             coin = self.underlying_coins[i]
         else:
             coin = self.coins[i]
-        coin_balance: uint256 = ERC20(coin).balanceOf(self)
+        coin_balance = ERC20(coin).balanceOf(self)
         coin_amounts[i] = coin_balance
         assert ERC20(coin).transfer(msg.sender, coin_balance)
     return coin_amounts
