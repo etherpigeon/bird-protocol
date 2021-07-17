@@ -175,6 +175,20 @@ def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, 
 
 
 @internal
+def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
+    if _total_supply != 0:
+        CurveGauge(AM3CRV_GAUGE).claim_rewards()
+
+    token: address = ZERO_ADDRESS
+    user_balance: uint256 = self.balanceOf[_user]
+    for i in range(MAX_REWARDS):
+        token = self.reward_tokens[i]
+        if token == ZERO_ADDRESS:
+            break
+        self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim)
+
+
+@internal
 def _burn(_from: address, _value: uint256) -> bool:
     self.balanceOf[_from] -= _value
     self.totalSupply -= _value
