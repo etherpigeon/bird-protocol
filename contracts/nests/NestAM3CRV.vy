@@ -190,6 +190,9 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
 
 @internal
 def _burn(_from: address, _value: uint256) -> bool:
+    total_supply: uint256 = self.totalSupply
+    self._checkpoint_rewards(_from, total_supply, False)
+
     self.balanceOf[_from] -= _value
     self.totalSupply -= _value
     log Transfer(_from, ZERO_ADDRESS, _value)
@@ -198,6 +201,9 @@ def _burn(_from: address, _value: uint256) -> bool:
 
 @internal
 def _mint(_to: address, _value: uint256) -> bool:
+    total_supply: uint256 = self.totalSupply
+    self._checkpoint_rewards(_to, total_supply, False)
+
     self.balanceOf[_to] += _value
     self.totalSupply += _value
     log Transfer(ZERO_ADDRESS, _to, _value)
@@ -206,8 +212,14 @@ def _mint(_to: address, _value: uint256) -> bool:
 
 @internal
 def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+    total_supply: uint256 = self.totalSupply
+
+    self._checkpoint_rewards(_from, total_supply, False)
     self.balanceOf[_from] -= _value  # dev: insufficient balance
+
+    self._checkpoint_rewards(_to, total_supply, False)
     self.balanceOf[_to] += _value
+
     log Transfer(_from, _to, _value)
     return True
 
