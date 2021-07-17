@@ -310,6 +310,15 @@ def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _us
 
 
 @external
+def update_reward_tokens():
+    for i in range(MAX_REWARDS):
+        reward_token: address = CurveGauge(AM3CRV_GAUGE).reward_tokens(i)
+        if reward_token == ZERO_ADDRESS:
+            break
+        self.reward_tokens[i] = reward_token
+
+
+@external
 def commit_transfer_ownership(_owner: address):
     assert msg.sender == self.owner  # dev: only owner
     self.future_owner = _owner
@@ -320,7 +329,6 @@ def accept_transfer_ownership():
     owner: address = self.future_owner
     assert msg.sender == owner  # dev: only future owner
     self.owner = owner
-    self.future_owner = ZERO_ADDRESS
 
 
 @external
