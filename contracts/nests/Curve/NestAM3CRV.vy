@@ -167,7 +167,7 @@ def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
 
 
 @external
-def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool) -> uint256:
+def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool, _min_shares: uint256) -> uint256:
     for i in range(N_COINS):
         coin: address = ZERO_ADDRESS
         if _use_underlying:
@@ -180,6 +180,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
     mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, prev_balance)
+    assert mint_amount >= _min_shares  # dev: slippage
     self._mint(msg.sender, mint_amount)
     return mint_amount
 
