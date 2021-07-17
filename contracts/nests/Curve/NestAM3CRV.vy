@@ -12,8 +12,9 @@ implements: ERC20
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
 AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
-N_COINS: constant(uint256) = 3
+CRV: constant(address) = 0x172370d5Cd63279eFa6d502DAB29171933a610AF  # CRV Token
 MAX_REWARDS: constant(uint256) = 8
+N_COINS: constant(uint256) = 3
 
 
 interface CurvePool:
@@ -33,7 +34,7 @@ interface CurvePool:
     def underlying_coins(arg0: uint256) -> address: view
 
 interface CurveGauge:
-    def claim_rewards(_addr: address, _receiver: address): nonpayable
+    def claim_rewards(): nonpayable
     def deposit(_value: uint256, _addr: address, _claim_rewards: bool): nonpayable
     def reward_tokens(arg0: uint256) -> address: view
     def withdraw(_value: uint256, _claim_rewards: bool): nonpayable
