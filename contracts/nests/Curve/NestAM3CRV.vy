@@ -198,9 +198,8 @@ def withdraw_lp_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
-    lp_balance: uint256 = ERC20(AM3CRV).balanceOf(self)
-    assert ERC20(AM3CRV).transfer(msg.sender, lp_balance)
-    return lp_balance
+    assert ERC20(AM3CRV).transfer(msg.sender, amount)
+    return amount
 
 
 @external
