@@ -73,6 +73,19 @@ coins: public(address[N_COINS])
 underlying_coins: public(address[N_COINS])
 reward_tokens: public(address[MAX_REWARDS])
 
+# For tracking external rewards
+reward_balances: public(HashMap[address, uint256])
+
+# reward token -> integral
+reward_integral: public(HashMap[address, uint256])
+
+# reward token -> claiming address -> integral
+reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
+
+# user -> [uint128 claimable amount][uint128 claimed amount]
+claim_data: public(HashMap[address, HashMap[address, uint256]])
+
+
 
 @external
 def __init__():
@@ -125,6 +138,40 @@ def _calc_mint_shares(
     else:
         shares: uint256 = (_deposit_value * _total_supply) / _prev_balance
         return shares
+
+
+@internal
+def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool):
+    dx: uint256 = 0
+    if _total_supply != 0:
+        token_balance: uint256 = ERC20(_token).balanceOf(self)
+        # dx = ratio of new reward token per LP token
+        dx = 10**18 * (token_balance - self.reward_balances[_token]) / _total_supply
+        self.reward_balances[_token] = token_balance
+
+    # integral = sum of dx over the course of nest lifetime
+    integral: uint256 = self.reward_integral[_token] + dx
+    if dx != 0:
+        self.reward_integral[_token] = integral
+
+    # integral_for = per user integral, which for new users starts at current integral
+    integral_for: uint256 = self.reward_integral_for[_token][_user]
+    if integral_for <= integral or _total_supply == 0:
+        new_claimable: uint256 = _user_balance * (integral - integral_for) / 10**18
+        self.reward_integral_for[_token][_user] = integral
+
+        claim_data: uint256 = self.claim_data[_user][_token]
+        total_claimed: uint256 = claim_data % 2 ** 128  # lower order bytes
+        total_claimable: uint256 = shift(claim_data, -128) + new_claimable
+
+        if _claim and total_claimable > 0:
+            assert ERC20(_token).transfer(_user, total_claimable)
+            self.reward_balances[_token] -= total_claimable
+            # update amount claimed (lower order bytes)
+            self.claim_data[_user][_token] = total_claimed + total_claimable
+        elif new_claimable > 0:
+            # update total_claimable (higher order bytes)
+            self.claim_data[_user][_token] = total_claimed + shift(total_claimable, 128)
 
 
 @internal
