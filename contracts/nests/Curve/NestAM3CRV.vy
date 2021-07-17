@@ -54,7 +54,7 @@ event Transfer:
     _to: indexed(address)
     _value: uint256
 
-event Withdrawl:
+event Withdraw:
     _withdrawer: indexed(address)
     _value: uint256
 
@@ -228,7 +228,7 @@ def withdraw_gauge_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
     assert ERC20(AM3CRV_GAUGE).transfer(msg.sender, amount)
-    log Withdrawl(msg.sender, amount)
+    log Withdraw(msg.sender, amount)
     return amount
 
 
@@ -238,7 +238,7 @@ def withdraw_lp_tokens(_value: uint256) -> uint256:
     self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     assert ERC20(AM3CRV).transfer(msg.sender, amount)
-    log Withdrawl(msg.sender, amount)
+    log Withdraw(msg.sender, amount)
     return amount
 
 
@@ -260,7 +260,7 @@ def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underly
         coin_balance = ERC20(coin).balanceOf(self)
         coin_amounts[i] = coin_balance
         assert ERC20(coin).transfer(msg.sender, coin_balance)
-    log Withdrawl(msg.sender, amount)
+    log Withdraw(msg.sender, amount)
     return coin_amounts
 
 
@@ -287,7 +287,7 @@ def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint2
         coin_balance = ERC20(coin).balanceOf(self)
         if coin_balance > 0:
             assert ERC20(coin).transfer(msg.sender, coin_balance)  # dev: bad response
-    log Withdrawl(msg.sender, lp_burned)
+    log Withdraw(msg.sender, lp_burned)
     return lp_burned
 
 
@@ -305,7 +305,7 @@ def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _us
     coin_balance: uint256 = ERC20(coin).balanceOf(self)
     assert ERC20(coin).transfer(msg.sender, coin_balance)  # dev: bad response
 
-    log Withdrawl(msg.sender, amount)
+    log Withdraw(msg.sender, amount)
     return coin_balance
 
 
