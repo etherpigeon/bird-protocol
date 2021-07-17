@@ -146,10 +146,11 @@ def calc_shares(_value: uint256, _is_deposit: bool) -> uint256:
 
 
 @external
-def deposit_gauge_tokens(_value: uint256) -> uint256:
+def deposit_gauge_tokens(_value: uint256, _min_shares: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
     mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, prev_balance)
+    assert mint_amount >= _min_shares  # dev: slippage
     self._mint(msg.sender, mint_amount)
     return mint_amount
 
