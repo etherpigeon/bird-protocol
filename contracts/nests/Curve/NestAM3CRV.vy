@@ -121,18 +121,17 @@ def _calc_mint_shares(
         return shares
 
 
+@pure
 @internal
-def _burn_shares(
-    _withdrawer: address,
+def _calc_burn_shares(
     _withdraw_value: uint256,
     _total_supply: uint256,
+    _current_balance: uint256
 ) -> uint256:
-    self._burn(_withdrawer, _withdraw_value)
-    current_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     if _total_supply == _withdraw_value:
-        return current_balance
+        return _current_balance
     else:
-        return (current_balance * _withdraw_value) / _total_supply
+        return (_current_balance * _withdraw_value) / _total_supply
 
 
 @external
@@ -172,17 +171,18 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
     return mint_amount
 
 
-
 @external
 def withdraw_gauge_tokens(_value: uint256) -> uint256:
-    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    self._burn(msg.sender, _value)
     assert ERC20(AM3CRV_GAUGE).transfer(msg.sender, amount)
     return amount
 
 
 @external
 def withdraw_lp_tokens(_value: uint256) -> uint256:
-    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     lp_balance: uint256 = ERC20(AM3CRV).balanceOf(self)
     assert ERC20(AM3CRV).transfer(msg.sender, lp_balance)
@@ -191,7 +191,8 @@ def withdraw_lp_tokens(_value: uint256) -> uint256:
 
 @external
 def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool) -> uint256[N_COINS]:
-    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     CurvePool(AM3POOL).remove_liquidity(amount, _min_amounts, _use_underlying)
     coin_amounts: uint256[N_COINS] = empty(uint256[N_COINS])
@@ -209,7 +210,8 @@ def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underly
 
 @external
 def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint256, _use_underlying: bool) -> uint256:
-    max_lp_burn: uint256 = self._burn_shares(msg.sender, _max_burn_amount, self.totalSupply)
+    max_lp_burn: uint256 = self._calc_burn_shares(_max_burn_amount, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    self._burn(msg.sender, _max_burn_amount)
     CurveGauge(AM3CRV_GAUGE).withdraw(max_lp_burn, False)
     lp_burned: uint256 = CurvePool(AM3POOL).remove_liquidity_imbalance(_amounts, max_lp_burn, _use_underlying)
     lp_remainder: uint256 = max_lp_burn - lp_burned
@@ -230,7 +232,8 @@ def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint2
 
 @external
 def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _use_underlying: bool) -> uint256:
-    amount: uint256 = self._burn_shares(msg.sender, _value, self.totalSupply)
+    amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    self._burn(msg.sender, _value)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     CurvePool(AM3POOL).remove_liquidity_one_coin(amount, _i, _min_amount, _use_underlying)
     coin: address = ZERO_ADDRESS
