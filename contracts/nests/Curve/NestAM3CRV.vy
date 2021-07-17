@@ -147,21 +147,19 @@ def calc_shares(_value: uint256, _is_deposit: bool) -> uint256:
 
 @external
 def deposit_gauge_tokens(_value: uint256, _min_shares: uint256) -> uint256:
-    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
-    assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
-    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, prev_balance)
+    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
+    assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
     self._mint(msg.sender, mint_amount)
     return mint_amount
 
 
 @external
 def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
-    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+    assert mint_amount >= _min_shares  # dev: slippage
     assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)  # dev: bad response
     CurveGauge(AM3CRV_GAUGE).deposit(_value, self, False)
-    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, prev_balance)
-    assert mint_amount >= _min_shares  # dev: slippage
     self._mint(msg.sender, mint_amount)
     return mint_amount
 
@@ -177,10 +175,9 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
         assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])  # dev: bad response
 
     value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)  # dev: bad response
-    prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
-    CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
-    mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, prev_balance)
+    mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
+    CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
     self._mint(msg.sender, mint_amount)
     return mint_amount
 
