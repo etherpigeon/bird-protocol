@@ -91,20 +91,17 @@ def __init__():
         self.reward_tokens[i] = reward_token
 
 
+@pure
 @internal
-def _mint(_to: address, _value: uint256) -> bool:
-    self.balanceOf[_to] += _value
-    self.totalSupply += _value
-    log Transfer(ZERO_ADDRESS, _to, _value)
-    return True
-
-
-@internal
-def _burn(_from: address, _value: uint256) -> bool:
-    self.balanceOf[_from] -= _value
-    self.totalSupply -= _value
-    log Transfer(_from, ZERO_ADDRESS, _value)
-    return True
+def _calc_burn_shares(
+    _withdraw_value: uint256,
+    _total_supply: uint256,
+    _current_balance: uint256
+) -> uint256:
+    if _total_supply == _withdraw_value:
+        return _current_balance
+    else:
+        return (_current_balance * _withdraw_value) / _total_supply
 
 
 @pure
@@ -121,17 +118,46 @@ def _calc_mint_shares(
         return shares
 
 
-@pure
 @internal
-def _calc_burn_shares(
-    _withdraw_value: uint256,
-    _total_supply: uint256,
-    _current_balance: uint256
-) -> uint256:
-    if _total_supply == _withdraw_value:
-        return _current_balance
-    else:
-        return (_current_balance * _withdraw_value) / _total_supply
+def _burn(_from: address, _value: uint256) -> bool:
+    self.balanceOf[_from] -= _value
+    self.totalSupply -= _value
+    log Transfer(_from, ZERO_ADDRESS, _value)
+    return True
+
+
+@internal
+def _mint(_to: address, _value: uint256) -> bool:
+    self.balanceOf[_to] += _value
+    self.totalSupply += _value
+    log Transfer(ZERO_ADDRESS, _to, _value)
+    return True
+
+
+@internal
+def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+    self.balanceOf[_from] -= _value  # dev: insufficient balance
+    self.balanceOf[_to] += _value
+    log Transfer(_from, _to, _value)
+    return True
+
+
+@external
+def approve(_spender: address, _value: uint256) -> bool:
+    self.allowance[msg.sender][_spender] = _value
+    log Approval(msg.sender, _spender, _value)
+    return True
+
+
+@external
+def transfer(_to: address, _value: uint256) -> bool:
+    return self._transferFrom(msg.sender, _to, _value)
+
+
+@external
+def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+    self.allowance[_from][msg.sender] -= _value  # dev: insufficient approval
+    return self._transferFrom(_from, _to, _value)
 
 
 @view
@@ -264,32 +290,6 @@ def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _us
     assert ERC20(coin).transfer(msg.sender, coin_balance)  # dev: bad response
 
     return coin_balance
-
-
-@external
-def approve(_spender: address, _value: uint256) -> bool:
-    self.allowance[msg.sender][_spender] = _value
-    log Approval(msg.sender, _spender, _value)
-    return True
-
-
-@internal
-def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
-    self.balanceOf[_from] -= _value  # dev: insufficient balance
-    self.balanceOf[_to] += _value
-    log Transfer(_from, _to, _value)
-    return True
-
-
-@external
-def transfer(_to: address, _value: uint256) -> bool:
-    return self._transferFrom(msg.sender, _to, _value)
-
-
-@external
-def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
-    self.allowance[_from][msg.sender] -= _value  # dev: insufficient approval
-    return self._transferFrom(_from, _to, _value)
 
 
 @external
