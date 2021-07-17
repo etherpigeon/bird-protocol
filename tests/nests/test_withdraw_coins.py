@@ -47,3 +47,26 @@ def test_withdraw_shares_nest_grows(
         assert math.isclose(
             coin.balanceOf(alice), proportion * (2 * 300 * 10 ** precision), rel_tol=0.01
         )
+
+
+def test_withdraw_shares_imbalanced(alice, coins_param, decimals, am3crv_nest, use_underlying):
+    balance = am3crv_nest.balanceOf(alice)
+    max_burn = balance / 2
+
+    proportion = [0.2, 0.4, 0.4]
+    amounts = [100 * p * 10 ** precision for p, precision in zip(proportion, decimals)]
+    am3crv_nest.withdraw_coins_imbalance(amounts, max_burn, use_underlying, {"from": alice})
+
+    for coin, amount in zip(coins_param, amounts):
+        assert math.isclose(coin.balanceOf(alice), amount, rel_tol=0.001)
+    assert am3crv_nest.balanceOf(alice) >= balance - max_burn
+
+
+@pytest.mark.parametrize("idx", [0, 1, 2])
+def test_withdraw_shares_single(alice, am3pool, coins_param, am3crv_nest, use_underlying, idx):
+    balance = am3crv_nest.balanceOf(alice)
+    min_amount = am3pool.calc_withdraw_one_coin(balance, idx) * 0.99  # slippage
+
+    am3crv_nest.withdraw_coins_single(balance, idx, min_amount, use_underlying)
+
+    assert coins_param[idx].balanceOf(alice) >= min_amount
