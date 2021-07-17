@@ -134,6 +134,17 @@ def _calc_burn_shares(
         return (_current_balance * _withdraw_value) / _total_supply
 
 
+@view
+@external
+def calc_shares(_value: uint256, _is_deposit: bool) -> uint256:
+    am3crv_gauge_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
+    total_supply: uint256 = self.totalSupply
+    if _is_deposit:
+        return self._calc_mint_shares(_value, total_supply, am3crv_gauge_balance)
+    else:
+        return self._calc_burn_shares(_value, total_supply, am3crv_gauge_balance)
+
+
 @external
 def deposit_gauge_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
