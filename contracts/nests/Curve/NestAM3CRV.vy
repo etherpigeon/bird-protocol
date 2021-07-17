@@ -107,19 +107,17 @@ def _burn(_from: address, _value: uint256) -> bool:
     return True
 
 
+@pure
 @internal
-def _mint_shares(
-    _depositor: address,
+def _calc_mint_shares(
     _deposit_value: uint256,
     _total_supply: uint256,
     _prev_balance: uint256
 ) -> uint256:
     if _total_supply == 0:
-        self._mint(_depositor, _deposit_value)
         return _deposit_value
     else:
         shares: uint256 = (_deposit_value * _total_supply) / _prev_balance
-        self._mint(_depositor, shares)
         return shares
 
 
@@ -141,7 +139,9 @@ def _burn_shares(
 def deposit_gauge_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
-    return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
+    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, prev_balance)
+    self._mint(msg.sender, mint_amount)
+    return mint_amount
 
 
 @external
@@ -149,7 +149,9 @@ def deposit_lp_tokens(_value: uint256) -> uint256:
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)  # dev: bad response
     CurveGauge(AM3CRV_GAUGE).deposit(_value, self, False)
-    return self._mint_shares(msg.sender, _value, self.totalSupply, prev_balance)
+    mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, prev_balance)
+    self._mint(msg.sender, mint_amount)
+    return mint_amount
 
 
 @external
@@ -165,7 +167,10 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
     value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)  # dev: bad response
     prev_balance: uint256 = ERC20(AM3CRV_GAUGE).balanceOf(self)
     CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
-    return self._mint_shares(msg.sender, value, self.totalSupply, prev_balance)
+    mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, prev_balance)
+    self._mint(msg.sender, mint_amount)
+    return mint_amount
+
 
 
 @external
@@ -209,7 +214,8 @@ def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint2
     lp_burned: uint256 = CurvePool(AM3POOL).remove_liquidity_imbalance(_amounts, max_lp_burn, _use_underlying)
     lp_remainder: uint256 = max_lp_burn - lp_burned
     if lp_remainder > 0:
-        self._mint_shares(msg.sender, lp_remainder, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+        mint_amount: uint256 = self._calc_mint_shares(lp_remainder, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
+        self._mint(msg.sender, mint_amount)
         CurveGauge(AM3CRV_GAUGE).deposit(lp_remainder, self, False)
     coin: address = ZERO_ADDRESS
     for i in range(N_COINS):
