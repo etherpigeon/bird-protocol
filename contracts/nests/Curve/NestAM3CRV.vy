@@ -166,13 +166,16 @@ def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
 
 @external
 def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool, _min_shares: uint256) -> uint256:
+    amount: uint256 = 0
     for i in range(N_COINS):
-        coin: address = ZERO_ADDRESS
+        amount = _amounts[i]
+        if amount == 0:
+            continue
+
         if _use_underlying:
-            coin = self.underlying_coins[i]
+            assert ERC20(self.underlying_coins[i]).transferFrom(msg.sender, self, amount)  # dev: bad response
         else:
-            coin = self.coins[i]
-        assert ERC20(coin).transferFrom(msg.sender, self, _amounts[i])  # dev: bad response
+            assert ERC20(self.coins[i]).transferFrom(msg.sender, self, amount)  # dev: bad response
 
     value: uint256 = CurvePool(AM3POOL).add_liquidity(_amounts, _min_mint_amount, _use_underlying)  # dev: bad response
     mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
