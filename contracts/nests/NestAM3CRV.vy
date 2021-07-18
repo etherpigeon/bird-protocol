@@ -12,6 +12,7 @@ implements: ERC20
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
 AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
+CHECKPOINT_DELAY: constant(uint256) = 1800  # 30 min delay
 CRV: constant(address) = 0x172370d5Cd63279eFa6d502DAB29171933a610AF  # CRV Token
 MAX_REWARDS: constant(uint256) = 8
 N_COINS: constant(uint256) = 3
@@ -82,6 +83,8 @@ reward_integral: public(HashMap[address, uint256])
 reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
 # user -> [uint128 claimable amount][uint128 claimed amount]
 claim_data: public(HashMap[address, HashMap[address, uint256]])
+
+last_checkpoint: public(uint256)
 
 
 @external
@@ -174,8 +177,10 @@ def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, 
 
 @internal
 def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
-    if _total_supply != 0:
-        CurveGauge(AM3CRV_GAUGE).claim_rewards()
+    if block.timestamp < self.last_checkpoint + CHECKPOINT_DELAY:
+        return
+
+    CurveGauge(AM3CRV_GAUGE).claim_rewards()
 
     token: address = ZERO_ADDRESS
     user_balance: uint256 = self.balanceOf[_user]
@@ -184,6 +189,8 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
         if token == ZERO_ADDRESS:
             break
         self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim)
+
+    self.last_checkpoint = block.timestamp
 
 
 @internal
