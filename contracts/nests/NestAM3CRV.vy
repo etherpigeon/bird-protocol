@@ -84,7 +84,6 @@ reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
 claim_data: public(HashMap[address, HashMap[address, uint256]])
 
 
-
 @external
 def __init__():
     self.owner = msg.sender
@@ -141,16 +140,16 @@ def _calc_mint_shares(
 
 @internal
 def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool):
-    dx: uint256 = 0
+    reward_slope: uint256 = 0
     if _total_supply != 0:
         token_balance: uint256 = ERC20(_token).balanceOf(self)
-        # dx = ratio of new reward token per LP token
-        dx = 10**18 * (token_balance - self.reward_balances[_token]) / _total_supply
+        # reward_slope = ratio of new reward token per LP token
+        reward_slope = 10**18 * (token_balance - self.reward_balances[_token]) / _total_supply
         self.reward_balances[_token] = token_balance
 
-    # integral = sum of dx over the course of nest lifetime
-    integral: uint256 = self.reward_integral[_token] + dx
-    if dx != 0:
+    # integral = sum of reward_slope over the course of nest lifetime
+    integral: uint256 = self.reward_integral[_token] + reward_slope
+    if reward_slope != 0:
         self.reward_integral[_token] = integral
 
     # integral_for = per user integral, which for new users starts at current integral
@@ -388,6 +387,24 @@ def update_reward_tokens():
         if reward_token == ZERO_ADDRESS:
             break
         self.reward_tokens[i] = reward_token
+
+
+@external
+def claimable_reward_write(_addr: address, _token: address) -> uint256:
+    self._checkpoint_rewards(_addr, self.totalSupply, False)
+    return shift(self.claim_data[_addr][_token], -128)
+
+
+@view
+@external
+def claimed_reward(_addr: address, _token: address) -> uint256:
+    return self.claim_data[_addr][_token] % 2**128
+
+
+@view
+@external
+def claimable_reward(_addr: address, _token: address) -> uint256:
+    return shift(self.claim_data[_addr][_token], -128)
 
 
 @external
