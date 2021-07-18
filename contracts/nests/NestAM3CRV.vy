@@ -252,6 +252,7 @@ def calc_shares(_value: uint256, _is_deposit: bool) -> uint256:
 
 
 @external
+@nonreentrant("lock")
 def deposit_gauge_tokens(_value: uint256, _min_shares: uint256) -> uint256:
     mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
@@ -262,6 +263,7 @@ def deposit_gauge_tokens(_value: uint256, _min_shares: uint256) -> uint256:
 
 
 @external
+@nonreentrant("lock")
 def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
     mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
@@ -273,6 +275,7 @@ def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
 
 
 @external
+@nonreentrant("lock")
 def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_underlying: bool, _min_shares: uint256) -> uint256:
     amount: uint256 = 0
     for i in range(N_COINS):
@@ -295,6 +298,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
 
 
 @external
+@nonreentrant("lock")
 def withdraw_gauge_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
@@ -304,6 +308,7 @@ def withdraw_gauge_tokens(_value: uint256) -> uint256:
 
 
 @external
+@nonreentrant("lock")
 def withdraw_lp_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
@@ -314,6 +319,7 @@ def withdraw_lp_tokens(_value: uint256) -> uint256:
 
 
 @external
+@nonreentrant("lock")
 def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool) -> uint256[N_COINS]:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
@@ -336,6 +342,7 @@ def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underly
 
 
 @external
+@nonreentrant("lock")
 def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint256, _use_underlying: bool) -> uint256:
     max_lp_burn: uint256 = self._calc_burn_shares(_max_burn_amount, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _max_burn_amount)
@@ -363,6 +370,7 @@ def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint2
 
 
 @external
+@nonreentrant("lock")
 def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _use_underlying: bool) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     self._burn(msg.sender, _value)
@@ -390,6 +398,7 @@ def update_reward_tokens():
 
 
 @external
+@nonreentrant("lock")
 def claimable_reward_write(_addr: address, _token: address) -> uint256:
     self._checkpoint_rewards(_addr, self.totalSupply, False)
     return shift(self.claim_data[_addr][_token], -128)
