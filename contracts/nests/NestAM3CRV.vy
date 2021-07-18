@@ -68,6 +68,7 @@ decimals: public(uint256)
 
 future_owner: public(address)
 owner: public(address)
+harvester: public(address)
 
 coins: public(address[N_COINS])
 underlying_coins: public(address[N_COINS])
@@ -75,13 +76,10 @@ reward_tokens: public(address[MAX_REWARDS])
 
 # For tracking external rewards
 reward_balances: public(HashMap[address, uint256])
-
 # reward token -> integral
 reward_integral: public(HashMap[address, uint256])
-
 # reward token -> claiming address -> integral
 reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
-
 # user -> [uint128 claimable amount][uint128 claimed amount]
 claim_data: public(HashMap[address, HashMap[address, uint256]])
 
@@ -90,6 +88,7 @@ claim_data: public(HashMap[address, HashMap[address, uint256]])
 @external
 def __init__():
     self.owner = msg.sender
+    self.harvester = msg.sender
 
     self.name = "Curve am3Pool Nest"
     self.symbol = "EGG-am3CRV"
@@ -408,3 +407,9 @@ def accept_transfer_ownership():
 def revert_transfer_ownership():
     assert msg.sender == self.owner  # dev: only owner
     self.future_owner = ZERO_ADDRESS
+
+
+@external
+def set_harvester(_harvester: address):
+    assert msg.sender ==self.owner
+    self.harvester = _harvester
