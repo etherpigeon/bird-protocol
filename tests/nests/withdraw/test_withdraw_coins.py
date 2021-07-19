@@ -9,8 +9,7 @@ def amounts(decimals):
 
 
 @pytest.fixture(scope="module")
-def pool_ratio(am3pool, coins):
-    decimals = [coin.decimals() for coin in coins]
+def pool_ratio(am3pool, decimals):
     balances = [am3pool.balances(i) / 10 ** precision for i, precision in enumerate(decimals)]
     _sum = sum(balances)
     return [val / _sum for val in balances]

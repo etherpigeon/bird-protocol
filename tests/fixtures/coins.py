@@ -107,14 +107,13 @@ def wmatic():
 
 
 @pytest.fixture(scope="session")
-def reward_tokens(am3crv_gauge, interface):
-    tokens = []
-    for i in range(8):
-        token = am3crv_gauge.reward_tokens(i)
-        if token == ZERO_ADDRESS:
-            break
-        tokens.append(token)
-    return [interface.ERC20(token) for token in tokens]
+def reward_tokens(crv, wmatic):
+    return [wmatic, crv]
+
+
+@pytest.fixture(scope="session")
+def decimals():
+    return [18, 6, 6]
 
 
 @pytest.fixture(scope="module", params=(False, True))
@@ -125,8 +124,3 @@ def use_underlying(request):
 @pytest.fixture(scope="module")
 def coins_param(coins, underlying_coins, use_underlying):
     return underlying_coins if use_underlying else coins
-
-
-@pytest.fixture(scope="module")
-def decimals(coins_param):
-    return [coin.decimals() for coin in coins_param]
