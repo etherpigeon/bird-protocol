@@ -471,5 +471,12 @@ def revert_transfer_ownership():
 
 @external
 def set_harvester(_harvester: address):
-    assert msg.sender ==self.owner
+    assert msg.sender == self.owner  # dev: only owner
     self.harvester = _harvester
+
+
+@external
+def set_admin_fee(_fee: uint256):
+    assert msg.sender == self.owner  # dev: only owner
+    assert _fee <= FEE_DENOMINATOR
+    self.admin_fee = _fee
