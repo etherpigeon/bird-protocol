@@ -1,5 +1,5 @@
 import pytest
-from brownie import convert, interface
+from brownie import ZERO_ADDRESS, convert, interface
 from brownie_tokens import MintableForkToken
 
 
@@ -77,21 +77,6 @@ def coins(adai, ausdc, ausdt):
     return [adai, ausdc, ausdt]
 
 
-@pytest.fixture(scope="module", params=(False, True))
-def use_underlying(request):
-    return request.param
-
-
-@pytest.fixture(scope="module")
-def coins_param(coins, underlying_coins, use_underlying):
-    return underlying_coins if use_underlying else coins
-
-
-@pytest.fixture(scope="module")
-def decimals(coins_param):
-    return [coin.decimals() for coin in coins_param]
-
-
 @pytest.fixture(scope="session")
 def am3pool(interface):
     return interface.StableSwap("0x445FE580eF8d70FF569aB36e80c647af338db351")
@@ -107,3 +92,29 @@ def am3crv_gauge(am3crv):
     return PolygonForkToken(
         "0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c", "RewardsOnlyGauge", am3crv
     )
+
+
+@pytest.fixture(scope="session")
+def reward_tokens(am3crv_gauge, interface):
+    tokens = []
+    for i in range(8):
+        token = am3crv_gauge.reward_tokens(i)
+        if token == ZERO_ADDRESS:
+            break
+        tokens.append(token)
+    return [interface.ERC20(token) for token in tokens]
+
+
+@pytest.fixture(scope="module", params=(False, True))
+def use_underlying(request):
+    return request.param
+
+
+@pytest.fixture(scope="module")
+def coins_param(coins, underlying_coins, use_underlying):
+    return underlying_coins if use_underlying else coins
+
+
+@pytest.fixture(scope="module")
+def decimals(coins_param):
+    return [coin.decimals() for coin in coins_param]
