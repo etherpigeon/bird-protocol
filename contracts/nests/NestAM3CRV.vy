@@ -147,7 +147,7 @@ def _calc_mint_shares(
 
 
 @internal
-def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool, _apply_fee: bool):
+def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool, _apply_fee: bool, _receiver: address):
     reward_slope: uint256 = 0
     if _total_supply != 0:
         new_rewards: uint256 = ERC20(_token).balanceOf(self) - self.reward_balances[_token]
@@ -176,7 +176,7 @@ def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, 
         total_claimable: uint256 = shift(claim_data, -128) + new_claimable
 
         if _claim and total_claimable > 0:
-            assert ERC20(_token).transfer(_user, total_claimable)
+            assert ERC20(_token).transfer(_receiver, total_claimable)
             self.reward_balances[_token] -= total_claimable
             # update amount claimed (lower order bytes)
             self.claim_data[_user][_token] = total_claimed + total_claimable
@@ -198,7 +198,11 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
         token = self.reward_tokens[i]
         if token == ZERO_ADDRESS:
             break
-        self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, True)
+        if token == CRV:
+            self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, True, _user)
+        else:
+            # non CRV rewards are all given to the ZERO_ADDRESS and received by the harvester
+            self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, _claim, True, self.harvester)
 
     self.last_checkpoint = block.timestamp
 
