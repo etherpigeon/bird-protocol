@@ -18,11 +18,13 @@ class PolygonForkToken(MintableForkToken):
             self._lp_token.approve(self, amount, {"from": target})
             self.deposit(amount, target, True, {"from": target})
             self._lp_token.approve(self, prev_allowance, {"from": target})
-        elif hasattr(self, "deposit"):
+        elif hasattr(self, "deposit") and not self.deposit.payable:
             # child ERC20
             depositor_role = "0x8f4f2da22e8ac8f11e15f9fc141cddbb5deea8800186560abb6e68c5496619a9"
             depositor = self.getRoleMember(depositor_role, 0)
             self.deposit(target, convert.to_bytes(amount), {"from": depositor})
+        elif hasattr(self, "deposit") and self.deposit.payable:
+            self.deposit({"from": target, "value": amount})
         elif hasattr(self, "ATOKEN_REVISION"):
             # aToken
             underlying_token = PolygonForkToken(self.UNDERLYING_ASSET_ADDRESS(), "UChildERC20")
@@ -92,6 +94,16 @@ def am3crv_gauge(am3crv):
     return PolygonForkToken(
         "0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c", "RewardsOnlyGauge", am3crv
     )
+
+
+@pytest.fixture(scope="session")
+def crv():
+    return PolygonForkToken("0x172370d5Cd63279eFa6d502DAB29171933a610AF", "UChildERC20")
+
+
+@pytest.fixture(scope="session")
+def wmatic():
+    return PolygonForkToken("0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270", "WMatic")
 
 
 @pytest.fixture(scope="session")
