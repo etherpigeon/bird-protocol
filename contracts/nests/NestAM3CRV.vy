@@ -37,10 +37,12 @@ interface CurvePool:
     def underlying_coins(arg0: uint256) -> address: view
 
 interface CurveGauge:
-    def claim_rewards(): nonpayable
     def deposit(_value: uint256, _addr: address, _claim_rewards: bool): nonpayable
-    def reward_tokens(arg0: uint256) -> address: view
     def withdraw(_value: uint256, _claim_rewards: bool): nonpayable
+
+interface RewardContract:
+    def claim_rewards(): nonpayable
+    def reward_tokens(arg0: uint256) -> address: view
 
 
 event Approval:
@@ -91,6 +93,9 @@ last_checkpoint: public(uint256)
 admin_balances: public(HashMap[address, uint256])
 admin_fee: public(uint256)
 
+reward_contract: public(address)
+additional_rewards: public(address[MAX_REWARDS])
+
 
 @external
 def __init__():
@@ -113,7 +118,7 @@ def __init__():
     assert ERC20(AM3CRV).approve(AM3CRV_GAUGE, MAX_UINT256)  # dev: bad response
 
     for i in range(MAX_REWARDS):
-        reward_token: address = CurveGauge(AM3CRV_GAUGE).reward_tokens(i)
+        reward_token: address = RewardContract(AM3CRV_GAUGE).reward_tokens(i)
         if reward_token == ZERO_ADDRESS:
             break
         self.reward_tokens[i] = reward_token
@@ -190,7 +195,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
     if block.timestamp < self.last_checkpoint + CHECKPOINT_DELAY:
         return
 
-    CurveGauge(AM3CRV_GAUGE).claim_rewards()
+    RewardContract(AM3CRV_GAUGE).claim_rewards()
 
     token: address = ZERO_ADDRESS
     user_balance: uint256 = self.balanceOf[_user]
@@ -203,6 +208,19 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
         else:
             # non CRV rewards are all given to the ZERO_ADDRESS and received by the harvester
             self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, _claim, True, self.harvester)
+    
+    # additional incentives
+
+    reward_contract: address = self.reward_contract
+    if reward_contract != ZERO_ADDRESS:
+        RewardContract(reward_contract).claim_rewards()
+        
+    for i in range(MAX_REWARDS):
+        token = self.additional_rewards[i]
+        if token == ZERO_ADDRESS:
+            break
+        # additional rewards aren't charged a fee
+        self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, False, _user)
 
     self.last_checkpoint = block.timestamp
 
@@ -424,12 +442,38 @@ def withdraw_admin_fees():
 
 
 @external
-def update_reward_tokens():
+def set_reward_contract(_reward_contract: address):
+    assert msg.sender == self.owner  # dev: only owner
+    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False)
+    self.reward_contract = _reward_contract
+
+
+@external
+def update_rewards():
+    base_rewards: address[MAX_REWARDS] = empty(address[MAX_REWARDS])
+    reward_token: address = ZERO_ADDRESS
     for i in range(MAX_REWARDS):
-        reward_token: address = CurveGauge(AM3CRV_GAUGE).reward_tokens(i)
+        reward_token = RewardContract(AM3CRV_GAUGE).reward_tokens(i)
         if reward_token == ZERO_ADDRESS:
             break
         self.reward_tokens[i] = reward_token
+        base_rewards[i] = reward_token
+
+    reward_contract: address = self.reward_contract
+    if reward_contract != ZERO_ADDRESS:
+        return
+
+    stored_reward: address = ZERO_ADDRESS
+    for i in range(MAX_REWARDS):
+        reward_token = RewardContract(reward_contract).reward_tokens(i)
+        stored_reward = self.additional_rewards[i]
+        if reward_token == stored_reward:
+            if reward_token == ZERO_ADDRESS:
+                break
+        else:
+            assert stored_reward == ZERO_ADDRESS  # dev: cannot overwrite a reward
+            assert reward_token not in base_rewards  # dev: duplicate reward
+            self.additional_rewards[i] = reward_token
 
 
 @external
@@ -455,7 +499,7 @@ def claimable_reward(_addr: address, _token: address) -> uint256:
 @nonreentrant("lock")
 def harvest():
     assert msg.sender == self.harvester  # dev: only harvester
-    self._checkpoint_rewards(ZERO_ADDRESS, 0, True)
+    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, True)
 
 
 @external
