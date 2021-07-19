@@ -406,6 +406,23 @@ def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _us
 
 
 @external
+@nonreentrant("lock")
+def withdraw_admin_fees():
+    assert msg.sender == self.owner
+    token: address = ZERO_ADDRESS
+    amount: uint256 = 0
+    for i in range(MAX_REWARDS):
+        token = self.reward_tokens[i]
+        if token == ZERO_ADDRESS:
+            break
+        amount = self.admin_balances[token]
+        if amount > 0:
+            self.admin_balances[token] = 0
+            self.reward_balances[token] -= amount
+            assert ERC20(token).transfer(self.owner, amount)  # dev: bad response
+
+
+@external
 def update_reward_tokens():
     for i in range(MAX_REWARDS):
         reward_token: address = CurveGauge(AM3CRV_GAUGE).reward_tokens(i)
