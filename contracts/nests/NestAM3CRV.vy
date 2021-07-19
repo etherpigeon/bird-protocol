@@ -17,6 +17,8 @@ CRV: constant(address) = 0x172370d5Cd63279eFa6d502DAB29171933a610AF  # CRV Token
 MAX_REWARDS: constant(uint256) = 8
 N_COINS: constant(uint256) = 3
 
+FEE_DENOMINATOR: constant(uint256) = 10_000
+
 
 interface CurvePool:
     def add_liquidity(
@@ -86,6 +88,9 @@ claim_data: public(HashMap[address, HashMap[address, uint256]])
 
 last_checkpoint: public(uint256)
 
+admin_balances: public(HashMap[address, uint256])
+admin_fee: public(uint256)
+
 
 @external
 def __init__():
@@ -142,13 +147,18 @@ def _calc_mint_shares(
 
 
 @internal
-def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool):
+def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, _total_supply: uint256, _claim: bool, _apply_fee: bool):
     reward_slope: uint256 = 0
     if _total_supply != 0:
-        token_balance: uint256 = ERC20(_token).balanceOf(self)
+        new_rewards: uint256 = ERC20(_token).balanceOf(self) - self.reward_balances[_token]
+        fee: uint256 = 0
+        if _apply_fee:
+            fee = self.admin_fee * new_rewards / FEE_DENOMINATOR
+
         # reward_slope = ratio of new reward token per LP token
-        reward_slope = 10**18 * (token_balance - self.reward_balances[_token]) / _total_supply
-        self.reward_balances[_token] = token_balance
+        reward_slope = 10**18 * (new_rewards - fee) / _total_supply
+        self.reward_balances[_token] += new_rewards
+        self.admin_balances[_token] += fee
 
     # integral = sum of reward_slope over the course of nest lifetime
     integral: uint256 = self.reward_integral[_token] + reward_slope
@@ -188,7 +198,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
         token = self.reward_tokens[i]
         if token == ZERO_ADDRESS:
             break
-        self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim)
+        self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, True)
 
     self.last_checkpoint = block.timestamp
 
