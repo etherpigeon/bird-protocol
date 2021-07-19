@@ -49,7 +49,7 @@ event Approval:
     _value: uint256
 
 event Deposit:
-    _depositor: indexed(address)
+    _user: indexed(address)
     _value: uint256
 
 event Transfer:
@@ -58,7 +58,7 @@ event Transfer:
     _value: uint256
 
 event Withdraw:
-    _withdrawer: indexed(address)
+    _user: indexed(address)
     _value: uint256
 
 
