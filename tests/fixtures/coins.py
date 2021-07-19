@@ -80,11 +80,6 @@ def coins(adai, ausdc, ausdt):
 
 
 @pytest.fixture(scope="session")
-def am3pool(interface):
-    return interface.StableSwap("0x445FE580eF8d70FF569aB36e80c647af338db351")
-
-
-@pytest.fixture(scope="session")
 def am3crv():
     return PolygonForkToken("0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171", "CurveTokenV3")
 
