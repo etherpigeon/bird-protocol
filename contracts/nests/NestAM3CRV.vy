@@ -209,9 +209,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
 
 @internal
 def _burn(_from: address, _value: uint256) -> bool:
-    total_supply: uint256 = self.totalSupply
-    self._checkpoint_rewards(_from, total_supply, False)
-
+    self._checkpoint_rewards(_from, self.totalSupply, False)
     self.balanceOf[_from] -= _value
     self.totalSupply -= _value
     log Transfer(_from, ZERO_ADDRESS, _value)
@@ -220,9 +218,7 @@ def _burn(_from: address, _value: uint256) -> bool:
 
 @internal
 def _mint(_to: address, _value: uint256) -> bool:
-    total_supply: uint256 = self.totalSupply
-    self._checkpoint_rewards(_to, total_supply, False)
-
+    self._checkpoint_rewards(_to, self.totalSupply, False)
     self.balanceOf[_to] += _value
     self.totalSupply += _value
     log Transfer(ZERO_ADDRESS, _to, _value)
@@ -231,6 +227,7 @@ def _mint(_to: address, _value: uint256) -> bool:
 
 @internal
 def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+    assert ZERO_ADDRESS not in [_from, _to]  # dev: disallowed
     total_supply: uint256 = self.totalSupply
 
     self._checkpoint_rewards(_from, total_supply, False)
@@ -452,6 +449,13 @@ def claimed_reward(_addr: address, _token: address) -> uint256:
 @external
 def claimable_reward(_addr: address, _token: address) -> uint256:
     return shift(self.claim_data[_addr][_token], -128)
+
+
+@external
+@nonreentrant("lock")
+def harvest():
+    assert msg.sender == self.harvester  # dev: only harvester
+    self._checkpoint_rewards(ZERO_ADDRESS, 0, True)
 
 
 @external
