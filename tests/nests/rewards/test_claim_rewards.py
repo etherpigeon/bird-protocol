@@ -83,7 +83,7 @@ def test_claim_and_harvester_claims_rewards_fee_set(alice, bob, charlie, am3crv_
 
     am3crv_nest.claim_rewards(alice, {"from": alice})
     am3crv_nest.harvest({"from": bob})
-    am3crv_nest.claim_admin_fees({"from": charlie})
+    am3crv_nest.withdraw_admin_fees({"from": charlie})
 
     assert crv.balanceOf(alice) > 0
     assert wmatic.balanceOf(alice) == 0

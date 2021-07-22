@@ -431,10 +431,11 @@ def withdraw_admin_fees():
         if token == ZERO_ADDRESS:
             break
         amount = self.admin_balances[token]
-        if amount > 0:
-            self.admin_balances[token] = 0
-            self.reward_balances[token] -= amount
-            assert ERC20(token).transfer(self.owner, amount)  # dev: bad response
+        if amount == 0:
+            continue
+        self.admin_balances[token] = 0
+        self.reward_balances[token] -= amount
+        assert ERC20(token).transfer(self.owner, amount)  # dev: bad response
 
 
 @external
@@ -506,23 +507,6 @@ def harvest():
     assert msg.sender == self.harvester  # dev: only harvester
     self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, True, msg.sender)
 
-
-@external
-@nonreentrant("lock")
-def claim_admin_fees():
-    assert msg.sender == self.owner  # dev: only owner
-    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False, msg.sender)
-    token: address = ZERO_ADDRESS
-    token_balance: uint256 = 0
-    for i in range(MAX_REWARDS):
-        token = self.reward_tokens[i]
-        if token == ZERO_ADDRESS:
-            break
-        token_balance = self.admin_balances[token]
-        if token_balance == 0:
-            continue
-        ERC20(token).transfer(msg.sender, token_balance)
-        self.admin_balances[token] = 0
 
 
 @external
