@@ -1,5 +1,5 @@
 import pytest
-from brownie import ZERO_ADDRESS, convert, interface
+from brownie import ETH_ADDRESS, convert, interface
 from brownie_tokens import MintableForkToken
 
 
@@ -24,6 +24,7 @@ class PolygonForkToken(MintableForkToken):
             depositor = self.getRoleMember(depositor_role, 0)
             self.deposit(target, convert.to_bytes(amount), {"from": depositor})
         elif hasattr(self, "deposit") and self.deposit.payable:
+            # Wmatic
             self.deposit({"from": target, "value": amount})
         elif hasattr(self, "ATOKEN_REVISION"):
             # aToken
@@ -34,9 +35,21 @@ class PolygonForkToken(MintableForkToken):
             lending_pool.deposit(underlying_token, amount, target, 0, {"from": target})
         elif hasattr(self, "mint") and hasattr(self, "minter"):
             # lp token
-            self.mint(target, amount, {"from": self.minter()})
+            pool = interface.StableSwap(self.minter())
+            coins = [PolygonForkToken(pool.coins(i), "AToken") for i in range(3)]
+            decimals = [coin.decimals() for coin in coins]
+            amounts = [100 * 10 ** prec for prec in decimals]
+            while self.balanceOf(target) < amount:
+                for coin, amt in zip(coins, amounts):
+                    coin._mint_for_testing(target, amt)
+                    if coin.allowance(target, pool) < amt:
+                        coin.approve(pool, 2 ** 256 - 1, {"from": target})
+                min_amt = pool.calc_token_amount(amounts, True)
+                pool.add_liquidity(amounts, min_amt * 0.99, False, {"from": target})
+            overflow = self.balanceOf(target) - amount
+            self.transfer(ETH_ADDRESS, overflow, {"from": target})
         else:
-            return super()._mint_for_testing(target, amount, tx=tx)
+            raise Exception("Not possible to mint for testing")
 
 
 @pytest.fixture(scope="session")
