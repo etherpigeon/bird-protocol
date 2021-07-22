@@ -98,7 +98,6 @@ additional_rewards: public(address[MAX_REWARDS])
 @external
 def __init__():
     self.owner = msg.sender
-    self.harvester = msg.sender
 
     self.name = "Curve am3Pool Nest"
     self.symbol = "EGG-am3CRV"
@@ -189,11 +188,12 @@ def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, 
 
 
 @internal
-def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
+def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool, _caller: address):
     RewardContract(AM3CRV_GAUGE).claim_rewards()
 
     token: address = ZERO_ADDRESS
     user_balance: uint256 = self.balanceOf[_user]
+    harvest_claim: bool = _claim and _caller == self.harvester
     for i in range(MAX_REWARDS):
         token = self.reward_tokens[i]
         if token == ZERO_ADDRESS:
@@ -202,7 +202,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
             self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, True, _user)
         else:
             # non CRV rewards are all given to the ZERO_ADDRESS and received by the harvester
-            self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, _claim, True, self.harvester)
+            self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, harvest_claim, True, self.harvester)
     
     # additional incentives
 
@@ -219,8 +219,8 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
 
 
 @internal
-def _burn(_from: address, _value: uint256) -> bool:
-    self._checkpoint_rewards(_from, self.totalSupply, False)
+def _burn(_from: address, _value: uint256, _caller: address) -> bool:
+    self._checkpoint_rewards(_from, self.totalSupply, False, _caller)
     self.balanceOf[_from] -= _value
     self.totalSupply -= _value
     log Transfer(_from, ZERO_ADDRESS, _value)
@@ -228,8 +228,8 @@ def _burn(_from: address, _value: uint256) -> bool:
 
 
 @internal
-def _mint(_to: address, _value: uint256) -> bool:
-    self._checkpoint_rewards(_to, self.totalSupply, False)
+def _mint(_to: address, _value: uint256, _caller: address) -> bool:
+    self._checkpoint_rewards(_to, self.totalSupply, False, _caller)
     self.balanceOf[_to] += _value
     self.totalSupply += _value
     log Transfer(ZERO_ADDRESS, _to, _value)
@@ -237,14 +237,14 @@ def _mint(_to: address, _value: uint256) -> bool:
 
 
 @internal
-def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
+def _transferFrom(_from: address, _to: address, _value: uint256, _caller: address) -> bool:
     assert ZERO_ADDRESS not in [_from, _to]  # dev: disallowed
     total_supply: uint256 = self.totalSupply
 
-    self._checkpoint_rewards(_from, total_supply, False)
+    self._checkpoint_rewards(_from, total_supply, False, _caller)
     self.balanceOf[_from] -= _value  # dev: insufficient balance
 
-    self._checkpoint_rewards(_to, total_supply, False)
+    self._checkpoint_rewards(_to, total_supply, False, _caller)
     self.balanceOf[_to] += _value
 
     log Transfer(_from, _to, _value)
@@ -262,14 +262,14 @@ def approve(_spender: address, _value: uint256) -> bool:
 @external
 @nonreentrant("lock")
 def transfer(_to: address, _value: uint256) -> bool:
-    return self._transferFrom(msg.sender, _to, _value)
+    return self._transferFrom(msg.sender, _to, _value, msg.sender)
 
 
 @external
 @nonreentrant("lock")
 def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
     self.allowance[_from][msg.sender] -= _value  # dev: insufficient approval
-    return self._transferFrom(_from, _to, _value)
+    return self._transferFrom(_from, _to, _value, msg.sender)
 
 
 @view
@@ -289,7 +289,7 @@ def deposit_gauge_tokens(_value: uint256, _min_shares: uint256) -> uint256:
     mint_amount: uint256 = self._calc_mint_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
     assert ERC20(AM3CRV_GAUGE).transferFrom(msg.sender, self, _value)  # dev: bad response
-    self._mint(msg.sender, mint_amount)
+    self._mint(msg.sender, mint_amount, msg.sender)
     log Deposit(msg.sender, _value)
     return mint_amount
 
@@ -301,7 +301,7 @@ def deposit_lp_tokens(_value: uint256, _min_shares: uint256) -> uint256:
     assert mint_amount >= _min_shares  # dev: slippage
     assert ERC20(AM3CRV).transferFrom(msg.sender, self, _value)  # dev: bad response
     CurveGauge(AM3CRV_GAUGE).deposit(_value, self, False)
-    self._mint(msg.sender, mint_amount)
+    self._mint(msg.sender, mint_amount, msg.sender)
     log Deposit(msg.sender, _value)
     return mint_amount
 
@@ -324,7 +324,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
     mint_amount: uint256 = self._calc_mint_shares(value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
     assert mint_amount >= _min_shares  # dev: slippage
     CurveGauge(AM3CRV_GAUGE).deposit(value, self, False)
-    self._mint(msg.sender, mint_amount)
+    self._mint(msg.sender, mint_amount, msg.sender)
     log Deposit(msg.sender, value)
     return mint_amount
 
@@ -333,7 +333,7 @@ def deposit_coins(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
 @nonreentrant("lock")
 def withdraw_gauge_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-    self._burn(msg.sender, _value)
+    self._burn(msg.sender, _value, msg.sender)
     assert ERC20(AM3CRV_GAUGE).transfer(msg.sender, amount)
     log Withdraw(msg.sender, amount)
     return amount
@@ -343,7 +343,7 @@ def withdraw_gauge_tokens(_value: uint256) -> uint256:
 @nonreentrant("lock")
 def withdraw_lp_tokens(_value: uint256) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-    self._burn(msg.sender, _value)
+    self._burn(msg.sender, _value, msg.sender)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     assert ERC20(AM3CRV).transfer(msg.sender, amount)
     log Withdraw(msg.sender, amount)
@@ -354,7 +354,7 @@ def withdraw_lp_tokens(_value: uint256) -> uint256:
 @nonreentrant("lock")
 def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underlying: bool) -> uint256[N_COINS]:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-    self._burn(msg.sender, _value)
+    self._burn(msg.sender, _value, msg.sender)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     CurvePool(AM3POOL).remove_liquidity(amount, _min_amounts, _use_underlying)
 
@@ -377,14 +377,14 @@ def withdraw_coins(_value: uint256, _min_amounts: uint256[N_COINS], _use_underly
 @nonreentrant("lock")
 def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint256, _use_underlying: bool) -> uint256:
     max_lp_burn: uint256 = self._calc_burn_shares(_max_burn_amount, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-    self._burn(msg.sender, _max_burn_amount)
+    self._burn(msg.sender, _max_burn_amount, msg.sender)
     CurveGauge(AM3CRV_GAUGE).withdraw(max_lp_burn, False)
     lp_burned: uint256 = CurvePool(AM3POOL).remove_liquidity_imbalance(_amounts, max_lp_burn, _use_underlying)
 
     lp_remainder: uint256 = max_lp_burn - lp_burned
     if lp_remainder > 0:
         mint_amount: uint256 = self._calc_mint_shares(lp_remainder, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-        self._mint(msg.sender, mint_amount)
+        self._mint(msg.sender, mint_amount, msg.sender)
         CurveGauge(AM3CRV_GAUGE).deposit(lp_remainder, self, False)
 
     coin: address = ZERO_ADDRESS
@@ -405,7 +405,7 @@ def withdraw_coins_imbalance(_amounts: uint256[N_COINS], _max_burn_amount: uint2
 @nonreentrant("lock")
 def withdraw_coins_single(_value: uint256, _i: int128, _min_amount: uint256, _use_underlying: bool) -> uint256:
     amount: uint256 = self._calc_burn_shares(_value, self.totalSupply, ERC20(AM3CRV_GAUGE).balanceOf(self))
-    self._burn(msg.sender, _value)
+    self._burn(msg.sender, _value, msg.sender)
     CurveGauge(AM3CRV_GAUGE).withdraw(amount, False)
     CurvePool(AM3POOL).remove_liquidity_one_coin(amount, _i, _min_amount, _use_underlying)
     coin: address = ZERO_ADDRESS
@@ -441,7 +441,7 @@ def withdraw_admin_fees():
 @nonreentrant("lock")
 def set_reward_contract(_reward_contract: address):
     assert msg.sender == self.owner  # dev: only owner
-    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False)
+    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False, msg.sender)
     self.reward_contract = _reward_contract
 
 
@@ -477,14 +477,14 @@ def update_rewards():
 @external
 @nonreentrant("lock")
 def claim_rewards(_addr: address) -> bool:
-    self._checkpoint_rewards(_addr, self.totalSupply, True)
+    self._checkpoint_rewards(_addr, self.totalSupply, True, msg.sender)
     return True
 
 
 @external
 @nonreentrant("lock")
 def claimable_reward_write(_addr: address, _token: address) -> uint256:
-    self._checkpoint_rewards(_addr, self.totalSupply, False)
+    self._checkpoint_rewards(_addr, self.totalSupply, False, msg.sender)
     return shift(self.claim_data[_addr][_token], -128)
 
 
@@ -504,7 +504,7 @@ def claimable_reward(_addr: address, _token: address) -> uint256:
 @nonreentrant("lock")
 def harvest():
     assert msg.sender == self.harvester  # dev: only harvester
-    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, True)
+    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, True, msg.sender)
 
 
 @external
