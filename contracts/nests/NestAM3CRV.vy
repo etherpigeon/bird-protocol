@@ -252,6 +252,7 @@ def _transferFrom(_from: address, _to: address, _value: uint256) -> bool:
 
 
 @external
+@nonreentrant("lock")
 def approve(_spender: address, _value: uint256) -> bool:
     self.allowance[msg.sender][_spender] = _value
     log Approval(msg.sender, _spender, _value)
@@ -259,11 +260,13 @@ def approve(_spender: address, _value: uint256) -> bool:
 
 
 @external
+@nonreentrant("lock")
 def transfer(_to: address, _value: uint256) -> bool:
     return self._transferFrom(msg.sender, _to, _value)
 
 
 @external
+@nonreentrant("lock")
 def transferFrom(_from: address, _to: address, _value: uint256) -> bool:
     self.allowance[_from][msg.sender] -= _value  # dev: insufficient approval
     return self._transferFrom(_from, _to, _value)
@@ -435,6 +438,7 @@ def withdraw_admin_fees():
 
 
 @external
+@nonreentrant("lock")
 def set_reward_contract(_reward_contract: address):
     assert msg.sender == self.owner  # dev: only owner
     self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False)
@@ -442,6 +446,7 @@ def set_reward_contract(_reward_contract: address):
 
 
 @external
+@nonreentrant("lock")
 def update_rewards():
     base_rewards: address[MAX_REWARDS] = empty(address[MAX_REWARDS])
     reward_token: address = ZERO_ADDRESS
@@ -467,6 +472,13 @@ def update_rewards():
             assert stored_reward == ZERO_ADDRESS  # dev: cannot overwrite a reward
             assert reward_token not in base_rewards  # dev: duplicate reward
             self.additional_rewards[i] = reward_token
+
+
+@external
+@nonreentrant("lock")
+def claim_rewards(_addr: address) -> bool:
+    self._checkpoint_rewards(_addr, self.totalSupply, True)
+    return True
 
 
 @external
