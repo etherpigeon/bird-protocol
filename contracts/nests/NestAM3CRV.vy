@@ -508,6 +508,24 @@ def harvest():
 
 
 @external
+@nonreentrant("lock")
+def claim_admin_fees():
+    assert msg.sender == self.owner  # dev: only owner
+    self._checkpoint_rewards(ZERO_ADDRESS, self.totalSupply, False, msg.sender)
+    token: address = ZERO_ADDRESS
+    token_balance: uint256 = 0
+    for i in range(MAX_REWARDS):
+        token = self.reward_tokens[i]
+        if token == ZERO_ADDRESS:
+            break
+        token_balance = self.admin_balances[token]
+        if token_balance == 0:
+            continue
+        ERC20(token).transfer(msg.sender, token_balance)
+        self.admin_balances[token] = 0
+
+
+@external
 def commit_transfer_ownership(_owner: address):
     assert msg.sender == self.owner  # dev: only owner
     self.future_owner = _owner
