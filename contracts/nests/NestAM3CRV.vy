@@ -88,8 +88,6 @@ reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
 # user -> [uint128 claimable amount][uint128 claimed amount]
 claim_data: public(HashMap[address, HashMap[address, uint256]])
 
-last_checkpoint: public(uint256)
-
 admin_balances: public(HashMap[address, uint256])
 admin_fee: public(uint256)
 
@@ -192,9 +190,6 @@ def _checkpoint_reward(_token: address, _user: address, _user_balance: uint256, 
 
 @internal
 def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
-    if block.timestamp < self.last_checkpoint + CHECKPOINT_DELAY:
-        return
-
     RewardContract(AM3CRV_GAUGE).claim_rewards()
 
     token: address = ZERO_ADDRESS
@@ -221,8 +216,6 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool):
             break
         # additional rewards aren't charged a fee
         self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, False, _user)
-
-    self.last_checkpoint = block.timestamp
 
 
 @internal
