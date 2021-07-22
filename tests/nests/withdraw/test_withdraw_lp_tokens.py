@@ -1,12 +1,4 @@
 import brownie
-import pytest
-
-
-@pytest.fixture(scope="module", autouse=True)
-def setup(alice, am3crv, am3crv_nest):
-    am3crv._mint_for_testing(alice, 100 * 10 ** 18)
-    am3crv.approve(am3crv_nest, 100 * 10 ** 18, {"from": alice})
-    am3crv_nest.deposit_lp_tokens(100 * 10 ** 18, 100 * 10 ** 18, {"from": alice})
 
 
 def test_burn_shares(alice, am3crv, am3crv_gauge, am3crv_nest):

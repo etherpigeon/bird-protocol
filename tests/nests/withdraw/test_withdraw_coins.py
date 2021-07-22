@@ -1,64 +1,56 @@
 import math
+from brownie import ETH_ADDRESS
 
 import pytest
 
 
-@pytest.fixture(scope="module")
-def amounts(decimals):
-    return [100 * 10 ** precision for precision in decimals]
-
-
-@pytest.fixture(scope="module")
-def pool_ratio(am3pool, decimals):
-    balances = [am3pool.balances(i) / 10 ** precision for i, precision in enumerate(decimals)]
-    _sum = sum(balances)
-    return [val / _sum for val in balances]
+coin_amounts = [33 * 10 ** p for p in [18, 6, 6]]
 
 
 @pytest.fixture(autouse=True)
-def setup(alice, amounts, coins_param, am3crv_nest, am3pool, use_underlying):
-    for coin, amount in zip(coins_param, amounts):
-        coin._mint_for_testing(alice, amount - coin.balanceOf(alice))
-        coin.approve(am3crv_nest, amount, {"from": alice})
-    min_amount = am3pool.calc_token_amount(amounts, True) * 0.99  # 1% slippage
-    min_shares = am3crv_nest.calc_shares(min_amount, True)
-    am3crv_nest.deposit_coins(amounts, min_amount, use_underlying, min_shares, {"from": alice})
+def setup(coins_param, alice):
+    for coin in coins_param:
+        if coin.balanceOf(alice) > 0:
+            coin.transfer(ETH_ADDRESS, coin.balanceOf(alice), {"from": alice})
 
 
-def test_withdraw_shares(alice, coins_param, decimals, pool_ratio, am3crv_nest, use_underlying):
-    value = am3crv_nest.balanceOf(alice)
+def test_withdraw_shares(alice, am3pool, coins_param, am3crv_nest, use_underlying):
+    value = am3pool.calc_token_amount(coin_amounts, False) * 1.01
 
-    am3crv_nest.withdraw_coins(value, [0] * 3, use_underlying, {"from": alice})
+    am3crv_nest.withdraw_coins(value, coin_amounts, use_underlying, {"from": alice})
 
-    for coin, proportion, precision in zip(coins_param, pool_ratio, decimals):
-        assert math.isclose(
-            coin.balanceOf(alice), proportion * (300 * 10 ** precision), rel_tol=0.01
-        )
+    for coin, amount in zip(coins_param, coin_amounts):
+        assert coin.balanceOf(alice) >= amount
 
 
 def test_withdraw_shares_nest_grows(
-    alice, am3crv_gauge, coins_param, pool_ratio, decimals, am3crv_nest, use_underlying
+    alice, am3pool, am3crv_gauge, coins_param, am3crv_nest, use_underlying
 ):
     am3crv_gauge._mint_for_testing(am3crv_nest, am3crv_gauge.balanceOf(am3crv_nest))  # double up
-    value = am3crv_nest.balanceOf(alice)
 
-    am3crv_nest.withdraw_coins(value, [0] * 3, use_underlying, {"from": alice})
-    for coin, proportion, precision in zip(coins_param, pool_ratio, decimals):
-        assert math.isclose(
-            coin.balanceOf(alice), proportion * (2 * 300 * 10 ** precision), rel_tol=0.01
-        )
+    min_amounts = [amt * 2 for amt in coin_amounts]
+    min_lp_amt = am3pool.calc_token_amount(min_amounts, False)
+    value = am3crv_nest.calc_shares(min_lp_amt, True) * 1.01
+
+    am3crv_nest.withdraw_coins(value, min_amounts, use_underlying, {"from": alice})
+
+    for coin, amount in zip(coins_param, coin_amounts):
+        assert coin.balanceOf(alice) > 2 * amount
 
 
-def test_withdraw_shares_imbalanced(alice, coins_param, decimals, am3crv_nest, use_underlying):
+def test_withdraw_shares_imbalanced(alice, coins_param, am3crv_nest, use_underlying):
     balance = am3crv_nest.balanceOf(alice)
     max_burn = balance / 2
 
-    proportion = [0.2, 0.4, 0.4]
-    amounts = [100 * p * 10 ** precision for p, precision in zip(proportion, decimals)]
-    am3crv_nest.withdraw_coins_imbalance(amounts, max_burn, use_underlying, {"from": alice})
+    proportion = [0.1, 0.2, 0.3]
+    imbalanced_amounts = [amt * p for amt, p in zip(coin_amounts, proportion)]
+    am3crv_nest.withdraw_coins_imbalance(
+        imbalanced_amounts, max_burn, use_underlying, {"from": alice}
+    )
 
-    for coin, amount in zip(coins_param, amounts):
-        assert math.isclose(coin.balanceOf(alice), amount, rel_tol=0.001)
+    for coin, amount in zip(coins_param, imbalanced_amounts):
+        assert coin.balanceOf(alice) >= amount
+
     assert am3crv_nest.balanceOf(alice) >= balance - max_burn
 
 
