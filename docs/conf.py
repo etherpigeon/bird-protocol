@@ -32,6 +32,8 @@ release = "0.1.0"
 # ones.
 extensions = ["myst_parser"]
 
+myst_enable_extensions = ["colon_fence"]
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
