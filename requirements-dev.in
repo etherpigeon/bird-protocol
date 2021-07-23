@@ -4,6 +4,7 @@ black
 brownie-token-tester
 flake8
 isort
+myst-parser
 pip-tools
 pre-commit
 sphinx
