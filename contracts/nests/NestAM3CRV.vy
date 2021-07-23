@@ -231,7 +231,7 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool, _c
         if token == ZERO_ADDRESS:
             break
         if token == CRV:
-            self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, True, _user)
+            self._checkpoint_reward(token, _user, user_balance, _total_supply, _claim, False, _user)
         else:
             # non CRV rewards are all given to the ZERO_ADDRESS and received by the harvester
             self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, harvest_claim, True, self.harvester)

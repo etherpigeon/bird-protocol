@@ -18,7 +18,7 @@ def test_claim_crv_rewards_fee_set(alice, am3crv_nest, crv, wmatic):
 
     assert crv.balanceOf(alice) > 0
     assert wmatic.balanceOf(alice) == 0
-    assert crv.balanceOf(am3crv_nest) > 0  # fee is 5%
+    assert crv.balanceOf(am3crv_nest) == 0  # fee is 5%
     assert wmatic.balanceOf(am3crv_nest) > 0  # harvester hasn't claimed
 
     assert math.isclose(am3crv_nest.admin_balances(crv), crv.balanceOf(am3crv_nest))
@@ -42,7 +42,7 @@ def test_harvester_claims_rewards_fee_set(alice, bob, am3crv_nest, crv, wmatic):
 
     assert crv.balanceOf(bob) == 0  # no harvesting of CRV for rewards
     assert wmatic.balanceOf(bob) > 0
-    assert crv.balanceOf(am3crv_nest) > 0  # admin fee is 5%
+    assert crv.balanceOf(am3crv_nest) > 0  # user has not claimed
     assert wmatic.balanceOf(am3crv_nest) > 0  # harvester has claimed and there is admin fee
 
 
@@ -71,8 +71,8 @@ def test_claim_and_harvester_claims_rewards_fee_set(alice, bob, am3crv_nest, crv
     assert crv.balanceOf(bob) == 0  # no harvesting of CRV for rewards
     assert wmatic.balanceOf(bob) > 0
 
-    assert crv.balanceOf(am3crv_nest) > 0  # admin fee is 5%
-    assert wmatic.balanceOf(am3crv_nest) > 0  # harvester has claimed and there is admin fee
+    assert am3crv_nest.admin_balances(crv) == 0
+    assert am3crv_nest.admin_balances(wmatic) > 0
 
 
 def test_claim_and_harvester_claims_rewards_fee_set_withdraw_admin_fees(
@@ -91,7 +91,7 @@ def test_claim_and_harvester_claims_rewards_fee_set_withdraw_admin_fees(
     assert wmatic.balanceOf(alice) == 0
     assert crv.balanceOf(bob) == 0  # no harvesting of CRV for rewards
     assert wmatic.balanceOf(bob) > 0
-    assert crv.balanceOf(charlie) > 0
+    assert crv.balanceOf(charlie) == 0
     assert wmatic.balanceOf(charlie) > 0
 
     assert max([am3crv_nest.admin_balances(tok) for tok in (crv, wmatic)]) == 0
