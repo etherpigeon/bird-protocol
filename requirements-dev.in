@@ -9,4 +9,5 @@ pip-tools
 pre-commit
 sphinx
 sphinx-autobuild
+sphinx-rtd-dark-mode
 sphinx_rtd_theme

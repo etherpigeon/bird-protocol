@@ -464,8 +464,12 @@ sphinx==4.1.1
     #   sphinx-rtd-theme
 sphinx-autobuild==2021.3.14
     # via -r requirements-dev.in
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-dark-mode==1.2.3
     # via -r requirements-dev.in
+sphinx-rtd-theme==0.5.2
+    # via
+    #   -r requirements-dev.in
+    #   sphinx-rtd-dark-mode
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
