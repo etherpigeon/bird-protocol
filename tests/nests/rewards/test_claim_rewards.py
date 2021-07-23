@@ -75,7 +75,9 @@ def test_claim_and_harvester_claims_rewards_fee_set(alice, bob, am3crv_nest, crv
     assert wmatic.balanceOf(am3crv_nest) > 0  # harvester has claimed and there is admin fee
 
 
-def test_claim_and_harvester_claims_rewards_fee_set(alice, bob, charlie, am3crv_nest, crv, wmatic):
+def test_claim_and_harvester_claims_rewards_fee_set_withdraw_admin_fees(
+    alice, bob, charlie, am3crv_nest, crv, wmatic
+):
     am3crv_nest.set_admin_fee(500, {"from": alice})
     am3crv_nest.set_harvester(bob, {"from": alice})
     am3crv_nest.commit_transfer_ownership(charlie, {"from": alice})

@@ -1,7 +1,5 @@
-import enum
-from brownie import ZERO_ADDRESS
 import pytest
-
+from brownie import ZERO_ADDRESS
 
 mint_actions = [
     ["deposit_gauge_tokens", 100 * 10 ** 18, 0],

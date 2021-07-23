@@ -3,7 +3,6 @@ import itertools as it
 import brownie
 import pytest
 
-
 coin_amounts = [100 * 10 ** p for p in [18, 6, 6]]
 
 

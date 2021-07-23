@@ -132,7 +132,7 @@ def _calc_burn_shares(
     @dev Calculate the amount of am3crv-gauge tokens that are redeemable
     @param _withdraw_value The amount of am3crv-egg tokens to redeem
     @param _total_supply The total supply of am3crv-egg tokens
-    @param _current_balance The current balance of am3crv-gauge tokens 
+    @param _current_balance The current balance of am3crv-gauge tokens
     @return The amount of am3crv-gauge tokens `_withdraw_value` is redeemable for.
     """
     if _total_supply == _withdraw_value:
@@ -235,13 +235,13 @@ def _checkpoint_rewards(_user: address, _total_supply: uint256, _claim: bool, _c
         else:
             # non CRV rewards are all given to the ZERO_ADDRESS and received by the harvester
             self._checkpoint_reward(token, ZERO_ADDRESS, 10 ** 18, 10 ** 18, harvest_claim, True, self.harvester)
-    
+
     # additional incentives
 
     reward_contract: address = self.reward_contract
     if reward_contract != ZERO_ADDRESS:
         RewardContract(reward_contract).claim_rewards()
-        
+
     for i in range(MAX_REWARDS):
         token = self.additional_rewards[i]
         if token == ZERO_ADDRESS:
@@ -681,7 +681,7 @@ def claimable_reward(_addr: address, _token: address) -> uint256:
 @nonreentrant("lock")
 def harvest():
     """
-    @notice Harvest extra reward tokens for dumping and reinvesting as am3crv-gauge tokens 
+    @notice Harvest extra reward tokens for dumping and reinvesting as am3crv-gauge tokens
     @dev Only callable by harvester which is by default ZERO_ADDRESS
     """
     assert msg.sender == self.harvester  # dev: only harvester

@@ -1,8 +1,5 @@
-import math
-from brownie import ETH_ADDRESS
-
 import pytest
-
+from brownie import ETH_ADDRESS
 
 coin_amounts = [33 * 10 ** p for p in [18, 6, 6]]
 
