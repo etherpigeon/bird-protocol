@@ -4,7 +4,7 @@ Bird Finance Protocol Documentation
 .. toctree::
    :titlesonly:
 
-   introduction.md
+   index.md
 
 .. toctree::
    :maxdepth: 2
