@@ -6,3 +6,6 @@ flake8
 isort
 pip-tools
 pre-commit
+sphinx
+sphinx-autobuild
+sphinx_rtd_theme

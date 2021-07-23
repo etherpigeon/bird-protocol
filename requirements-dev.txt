@@ -9,6 +9,8 @@ aiohttp==3.7.4.post0
     #   -c requirements.txt
     #   eth-brownie
     #   web3
+alabaster==0.7.12
+    # via sphinx
 appdirs==1.4.4
     # via
     #   -c requirements.txt
@@ -33,6 +35,8 @@ attrs==21.2.0
     #   hypothesis
     #   jsonschema
     #   pytest
+babel==2.9.1
+    # via sphinx
 base58==2.1.0
     # via
     #   -c requirements.txt
@@ -73,6 +77,8 @@ click==8.0.1
     #   black
     #   eth-brownie
     #   pip-tools
+colorama==0.4.4
+    # via sphinx-autobuild
 cytoolz==0.11.0
     # via
     #   -c requirements.txt
@@ -86,6 +92,10 @@ dataclassy==0.10.4
     #   eth-brownie
 distlib==0.3.2
     # via virtualenv
+docutils==0.16
+    # via
+    #   sphinx
+    #   sphinx-rtd-theme
 eip712==0.1.0
     # via
     #   -c requirements.txt
@@ -187,6 +197,8 @@ idna==3.2
     #   eth-brownie
     #   requests
     #   yarl
+imagesize==1.2.0
+    # via sphinx
 inflection==0.5.0
     # via
     #   -c requirements.txt
@@ -205,6 +217,8 @@ ipfshttpclient==0.7.0
     #   web3
 isort==5.9.1
     # via -r requirements-dev.in
+jinja2==3.0.1
+    # via sphinx
 jsonschema==3.2.0
     # via
     #   -c requirements.txt
@@ -215,11 +229,15 @@ lazy-object-proxy==1.6.0
     # via
     #   -c requirements.txt
     #   eth-brownie
+livereload==2.6.3
+    # via sphinx-autobuild
 lru-dict==1.1.7
     # via
     #   -c requirements.txt
     #   eth-brownie
     #   web3
+markupsafe==2.0.1
+    # via jinja2
 mccabe==0.6.1
     # via flake8
 multiaddr==0.0.9
@@ -255,6 +273,7 @@ packaging==21.0
     #   -c requirements.txt
     #   eth-brownie
     #   pytest
+    #   sphinx
 parsimonious==0.8.1
     # via
     #   -c requirements.txt
@@ -320,6 +339,7 @@ pygments==2.9.0
     #   -c requirements.txt
     #   eth-brownie
     #   pygments-lexer-solidity
+    #   sphinx
 pygments-lexer-solidity==0.7.0
     # via
     #   -c requirements.txt
@@ -368,6 +388,8 @@ pythx==1.6.1
     # via
     #   -c requirements.txt
     #   eth-brownie
+pytz==2021.1
+    # via babel
 pyyaml==5.4.1
     # via
     #   -c requirements.txt
@@ -385,6 +407,7 @@ requests==2.26.0
     #   ipfshttpclient
     #   py-solc-x
     #   pythx
+    #   sphinx
     #   vvm
     #   web3
 rlp==1.2.0
@@ -406,17 +429,41 @@ six==1.16.0
     #   asttokens
     #   eth-brownie
     #   jsonschema
+    #   livereload
     #   multiaddr
     #   parsimonious
     #   protobuf
     #   pytest-xdist
     #   python-dateutil
     #   virtualenv
+snowballstemmer==2.1.0
+    # via sphinx
 sortedcontainers==2.4.0
     # via
     #   -c requirements.txt
     #   eth-brownie
     #   hypothesis
+sphinx==4.1.1
+    # via
+    #   -r requirements-dev.in
+    #   sphinx-autobuild
+    #   sphinx-rtd-theme
+sphinx-autobuild==2021.3.14
+    # via -r requirements-dev.in
+sphinx-rtd-theme==0.5.2
+    # via -r requirements-dev.in
+sphinxcontrib-applehelp==1.0.2
+    # via sphinx
+sphinxcontrib-devhelp==1.0.2
+    # via sphinx
+sphinxcontrib-htmlhelp==2.0.0
+    # via sphinx
+sphinxcontrib-jsmath==1.0.1
+    # via sphinx
+sphinxcontrib-qthelp==1.0.3
+    # via sphinx
+sphinxcontrib-serializinghtml==1.1.5
+    # via sphinx
 toml==0.10.2
     # via
     #   -c requirements.txt
@@ -434,6 +481,8 @@ toolz==0.11.1
     #   -c requirements.txt
     #   cytoolz
     #   eth-brownie
+tornado==6.1
+    # via livereload
 tqdm==4.61.2
     # via
     #   -c requirements.txt
