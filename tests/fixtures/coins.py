@@ -38,7 +38,7 @@ class PolygonForkToken(MintableForkToken):
             pool = interface.StableSwap(self.minter())
             coins = [PolygonForkToken(pool.coins(i), "AToken") for i in range(3)]
             decimals = [coin.decimals() for coin in coins]
-            amounts = [100 * 10 ** prec for prec in decimals]
+            amounts = [10_000 * 10 ** prec for prec in decimals]
             while self.balanceOf(target) < amount:
                 for coin, amt in zip(coins, amounts):
                     coin._mint_for_testing(target, amt)
