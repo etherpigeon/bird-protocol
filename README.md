@@ -1,6 +1,7 @@
 # Bird Finance Protocol
 
 [![Documentation Status](https://readthedocs.org/projects/bird-finance/badge/?version=latest)](https://bird-finance.readthedocs.io/?badge=latest)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 Bird Finance is a niche protocol for [Curve Finance](https://polygon.curve.fi) liquidity providers on the [Polygon Network](https://polygon.technology) to maximize their yield without sacrificing their CRV.
 
