@@ -12,7 +12,6 @@ implements: ERC20
 AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
 AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
-CHECKPOINT_DELAY: constant(uint256) = 1800  # 30 min delay
 CRV: constant(address) = 0x172370d5Cd63279eFa6d502DAB29171933a610AF  # CRV Token
 MAX_REWARDS: constant(uint256) = 8
 N_COINS: constant(uint256) = 3
@@ -86,7 +85,7 @@ reward_integral: public(HashMap[address, uint256])
 # reward token -> claiming address -> integral
 reward_integral_for: public(HashMap[address, HashMap[address, uint256]])
 # user -> [uint128 claimable amount][uint128 claimed amount]
-claim_data: public(HashMap[address, HashMap[address, uint256]])
+claim_data: HashMap[address, HashMap[address, uint256]]
 
 admin_balances: public(HashMap[address, uint256])
 admin_fee: public(uint256)
