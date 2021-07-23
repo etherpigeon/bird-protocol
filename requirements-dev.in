@@ -1,7 +1,7 @@
 # requirements-dev.in
+-c requirements.txt
 black
 brownie-token-tester
-eth-brownie
 flake8
 isort
 pip-tools
