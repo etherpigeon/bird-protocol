@@ -115,7 +115,7 @@ eth-account==0.5.4
     #   -c requirements.txt
     #   eth-brownie
     #   web3
-eth-brownie==1.15.0
+eth-brownie==1.15.1
     # via
     #   -c requirements.txt
     #   brownie-token-tester
@@ -526,7 +526,7 @@ vvm==0.1.0
     # via
     #   -c requirements.txt
     #   eth-brownie
-vyper==0.2.14
+vyper==0.2.15
     # via
     #   -c requirements.txt
     #   eth-brownie

@@ -75,7 +75,7 @@ eth-account==0.5.4
     # via
     #   eth-brownie
     #   web3
-eth-brownie==1.15.0
+eth-brownie==1.15.1
     # via -r requirements.in
 eth-event==1.2.3
     # via eth-brownie
@@ -328,7 +328,7 @@ varint==1.0.2
     #   multiaddr
 vvm==0.1.0
     # via eth-brownie
-vyper==0.2.14
+vyper==0.2.15
     # via eth-brownie
 wcwidth==0.2.5
     # via
