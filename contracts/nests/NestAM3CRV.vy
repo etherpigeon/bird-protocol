@@ -9,9 +9,9 @@ from vyper.interfaces import ERC20
 implements: ERC20
 
 
-AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171  # Pool LP Token
 AM3CRV_GAUGE: constant(address) = 0x19793B454D3AfC7b454F206Ffe95aDE26cA6912c  # Pool Gauge
+AM3POOL: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351  # Curve Pool
 CRV: constant(address) = 0x172370d5Cd63279eFa6d502DAB29171933a610AF  # CRV Token
 MAX_REWARDS: constant(uint256) = 8
 N_COINS: constant(uint256) = 3
@@ -597,7 +597,12 @@ def update_rewards():
     """
     base_rewards: address[MAX_REWARDS] = empty(address[MAX_REWARDS])
     reward_token: address = ZERO_ADDRESS
+    stored_reward: address = ZERO_ADDRESS
     for i in range(MAX_REWARDS):
+        stored_reward = self.reward_tokens[i]
+        if stored_reward != ZERO_ADDRESS:
+            base_rewards[i] = stored_reward
+            continue
         reward_token = RewardContract(AM3CRV_GAUGE).reward_tokens(i)
         if reward_token == ZERO_ADDRESS:
             break
@@ -605,19 +610,18 @@ def update_rewards():
         base_rewards[i] = reward_token
 
     reward_contract: address = self.reward_contract
-    if reward_contract != ZERO_ADDRESS:
+    if reward_contract == ZERO_ADDRESS:
         return
 
-    stored_reward: address = ZERO_ADDRESS
     for i in range(MAX_REWARDS):
         reward_token = RewardContract(reward_contract).reward_tokens(i)
+        if reward_token == ZERO_ADDRESS:
+            break
         stored_reward = self.additional_rewards[i]
-        if reward_token == stored_reward:
-            if reward_token == ZERO_ADDRESS:
-                break
+        if stored_reward != ZERO_ADDRESS:
+            assert stored_reward == reward_token
         else:
-            assert stored_reward == ZERO_ADDRESS  # dev: cannot overwrite a reward
-            assert reward_token not in base_rewards  # dev: duplicate reward
+            assert reward_token not in base_rewards
             self.additional_rewards[i] = reward_token
 
 
