@@ -38,12 +38,12 @@ class PolygonForkToken(MintableForkToken):
             pool = interface.StableSwap(self.minter())
             coins = [PolygonForkToken(pool.coins(i), "AToken") for i in range(3)]
             decimals = [coin.decimals() for coin in coins]
-            amounts = [10_000 * 10 ** prec for prec in decimals]
+            amounts = [10_000 * 10**prec for prec in decimals]
             while self.balanceOf(target) < amount:
                 for coin, amt in zip(coins, amounts):
                     coin._mint_for_testing(target, amt)
                     if coin.allowance(target, pool) < amt:
-                        coin.approve(pool, 2 ** 256 - 1, {"from": target})
+                        coin.approve(pool, 2**256 - 1, {"from": target})
                 min_amt = pool.calc_token_amount(amounts, True)
                 pool.add_liquidity(amounts, min_amt * 0.99, False, {"from": target})
             overflow = self.balanceOf(target) - amount

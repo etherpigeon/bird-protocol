@@ -2,10 +2,10 @@ import pytest
 from brownie import ZERO_ADDRESS
 
 mint_actions = [
-    ["deposit_gauge_tokens", 100 * 10 ** 18, 0],
-    ["deposit_lp_tokens", 100 * 10 ** 18, 0],
-    ["deposit_coins", [100 * 10 ** p for p in (18, 6, 6)], 0, True, 0],
-    ["deposit_coins", [100 * 10 ** p for p in (18, 6, 6)], 0, False, 0],
+    ["deposit_gauge_tokens", 100 * 10**18, 0],
+    ["deposit_lp_tokens", 100 * 10**18, 0],
+    ["deposit_coins", [100 * 10**p for p in (18, 6, 6)], 0, True, 0],
+    ["deposit_coins", [100 * 10**p for p in (18, 6, 6)], 0, False, 0],
 ]
 
 
@@ -28,28 +28,28 @@ def test_checkpoint_on_mint(alice, am3crv_nest, crv, wmatic, reward_tokens, mint
 
 
 burn_actions = [
-    ["withdraw_gauge_tokens", 100 * 10 ** 18],
-    ["withdraw_lp_tokens", 100 * 10 ** 18],
-    ["withdraw_coins", 100 * 10 ** 18, [0, 0, 0], True],
-    ["withdraw_coins", 100 * 10 ** 18, [0, 0, 0], False],
+    ["withdraw_gauge_tokens", 100 * 10**18],
+    ["withdraw_lp_tokens", 100 * 10**18],
+    ["withdraw_coins", 100 * 10**18, [0, 0, 0], True],
+    ["withdraw_coins", 100 * 10**18, [0, 0, 0], False],
     [
         "withdraw_coins_imbalance",
-        [100 * 10 ** 18, 50 * 10 ** 6, 25 * 10 ** 6],
-        1000 * 10 ** 18,
+        [100 * 10**18, 50 * 10**6, 25 * 10**6],
+        1000 * 10**18,
         True,
     ],
     [
         "withdraw_coins_imbalance",
-        [100 * 10 ** 18, 50 * 10 ** 6, 25 * 10 ** 6],
-        1000 * 10 ** 18,
+        [100 * 10**18, 50 * 10**6, 25 * 10**6],
+        1000 * 10**18,
         False,
     ],
-    ["withdraw_coins_single", 100 * 10 ** 18, 0, 0, True],
-    ["withdraw_coins_single", 100 * 10 ** 18, 0, 0, False],
-    ["withdraw_coins_single", 100 * 10 ** 18, 1, 0, True],
-    ["withdraw_coins_single", 100 * 10 ** 18, 1, 0, False],
-    ["withdraw_coins_single", 100 * 10 ** 18, 2, 0, True],
-    ["withdraw_coins_single", 100 * 10 ** 18, 2, 0, False],
+    ["withdraw_coins_single", 100 * 10**18, 0, 0, True],
+    ["withdraw_coins_single", 100 * 10**18, 0, 0, False],
+    ["withdraw_coins_single", 100 * 10**18, 1, 0, True],
+    ["withdraw_coins_single", 100 * 10**18, 1, 0, False],
+    ["withdraw_coins_single", 100 * 10**18, 2, 0, True],
+    ["withdraw_coins_single", 100 * 10**18, 2, 0, False],
 ]
 
 
@@ -73,7 +73,7 @@ def test_checkpoint_on_burn(alice, am3crv_nest, crv, wmatic, reward_tokens, burn
 def test_checkpoint_on_transfer(alice, bob, am3crv_nest, crv, wmatic, reward_tokens):
     assert max([token.balanceOf(am3crv_nest) for token in reward_tokens]) == 0
 
-    am3crv_nest.transfer(bob, 1000 * 10 ** 18, {"from": alice})
+    am3crv_nest.transfer(bob, 1000 * 10**18, {"from": alice})
 
     for token in reward_tokens:
         # rewards have been transferred in

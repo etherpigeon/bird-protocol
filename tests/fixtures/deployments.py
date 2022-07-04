@@ -17,9 +17,9 @@ def am3pool(interface, coins, decimals):
     pool.donate_admin_fees({"from": pool.owner()})
 
     scalers = [18 - precision for precision in decimals]
-    balances = [pool.balances(i) * 10 ** precision for i, precision in enumerate(scalers)]
+    balances = [pool.balances(i) * 10**precision for i, precision in enumerate(scalers)]
     mint_amounts = [
-        (max(balances) - balances[i]) // 10 ** precision for i, precision in enumerate(scalers)
+        (max(balances) - balances[i]) // 10**precision for i, precision in enumerate(scalers)
     ]
 
     for coin, mint_amt in zip(coins, mint_amounts):
