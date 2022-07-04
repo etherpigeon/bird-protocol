@@ -3,15 +3,15 @@ import itertools as it
 import brownie
 import pytest
 
-coin_amounts = [100 * 10 ** p for p in [18, 6, 6]]
+coin_amounts = [100 * 10**p for p in [18, 6, 6]]
 
 
 @pytest.fixture(scope="module", autouse=True)
 def setup(alice, bob, coins_param, am3crv_nest, am3pool):
     for depositor, (coin, amount) in it.product((alice, bob), zip(coins_param, coin_amounts)):
         coin._mint_for_testing(depositor, amount)
-        coin.approve(am3crv_nest, 2 ** 256 - 1, {"from": depositor})
-        coin.approve("0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf", 2 ** 256 - 1, {"from": am3pool})
+        coin.approve(am3crv_nest, 2**256 - 1, {"from": depositor})
+        coin.approve("0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf", 2**256 - 1, {"from": am3pool})
 
 
 def test_mint_shares_coins(alice, am3pool, am3crv_gauge, am3crv_nest, use_underlying):
@@ -43,7 +43,7 @@ def test_mint_shares_coins_nest_grows(
     min_shares = am3crv_nest.calc_shares(min_amount, True)
     am3crv_nest.deposit_coins(coin_amounts, min_amount, use_underlying, min_shares, {"from": alice})
 
-    am3crv_gauge._mint_for_testing(am3crv_nest, 100 * 10 ** 18)
+    am3crv_gauge._mint_for_testing(am3crv_nest, 100 * 10**18)
 
     min_amount = am3pool.calc_token_amount(coin_amounts, True) * 0.99
     min_shares = am3crv_nest.calc_shares(min_amount, True)
